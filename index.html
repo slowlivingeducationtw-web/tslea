@@ -564,9 +564,82 @@ footer { background:var(--charcoal); color:rgba(255,255,255,0.3); text-align:cen
   .plan-content.active{grid-template-columns:1fr;gap:2rem}
   .articles-grid{grid-template-columns:1fr}
   .contact-cards{grid-template-columns:1fr}
-  .member-content{padding:2.5rem 1.8rem}
+  .member-content{padding:2.5rem 1.4rem}
   .photo-gallery{columns:2}
-  .meeting-item{grid-template-columns:1fr;gap:0.8rem}
+  .meeting-item{grid-template-columns:1fr;gap:0.8rem;padding:1.4rem 1.4rem}
+
+  /* 各分頁標題橫幅 */
+  .col-header,
+  .board-page-header,
+  .page-banner{ padding:4rem 1.8rem 2rem !important; }
+  .col-header .sec-title,
+  .board-page-header .sec-title,
+  .page-banner .sec-title{ margin-bottom:1.4rem; }
+
+  /* 慢活專欄：篩選按鈕、文章卡片 */
+  .col-filter-bar{ gap:0.4rem; }
+  .filter-btn{ padding:0.32rem 0.85rem; font-size:0.72rem; letter-spacing:0.14em; }
+  .article-card{ padding:1.8rem 1.5rem; }
+  .article-card > div[style*="display:flex"]{
+    flex-direction:column !important; gap:1.4rem !important;
+  }
+  .article-card > div > div[style*="width:220px"],
+  .article-card > div > div[style*="width: 220px"]{
+    width:100% !important;
+  }
+  .article-title{ font-size:0.98rem !important; line-height:1.7; }
+  .article-excerpt{ font-size:0.82rem; }
+
+  /* 理監事名單：grid 至少兩欄、padding 縮小 */
+  #page-board section.sec{ padding:2.8rem 1.4rem; }
+  #page-board [style*="grid-template-columns:repeat(auto-fill"]{
+    grid-template-columns:repeat(2,1fr) !important;
+  }
+  #page-board [style*="padding:1.4rem 1.5rem"],
+  #page-board [style*="padding:1.2rem 1.5rem"]{
+    padding:1rem 1rem !important;
+  }
+
+  /* 年度計畫：tab 列可橫向滑動 */
+  .plans-tabs{
+    flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden;
+    -webkit-overflow-scrolling:touch; margin-bottom:2rem;
+    scrollbar-width:none;
+  }
+  .plans-tabs::-webkit-scrollbar{ display:none; }
+  .plan-tab{
+    padding:0.7rem 1.1rem; font-size:0.74rem; letter-spacing:0.14em;
+    white-space:nowrap; flex-shrink:0;
+  }
+
+  /* 捐款頁：兩欄改一欄 */
+  .donate-grid{
+    grid-template-columns:1fr !important; gap:2.4rem !important;
+  }
+  #page-donate [style*="padding:2.5rem"]{ padding:2rem 1.6rem !important; }
+
+  /* 理監事專區：登入框、topbar、tab */
+  .login-box{ padding:2.6rem 1.8rem; }
+  .login-deco{ font-size:3rem; }
+  .login-title{ font-size:1.15rem; }
+  .member-topbar{ padding:0.9rem 1.4rem; flex-wrap:wrap; gap:0.6rem; }
+  .member-topbar-title{ font-size:0.7rem; letter-spacing:0.18em; }
+  .member-tabs{
+    flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none; margin-bottom:2rem;
+  }
+  .member-tabs::-webkit-scrollbar{ display:none; }
+  .m-tab{
+    padding:0.6rem 1.1rem; font-size:0.74rem; letter-spacing:0.14em;
+    white-space:nowrap; flex-shrink:0;
+  }
+  .meeting-date-block{ text-align:left; display:flex; align-items:baseline; gap:0.6rem; }
+  .meeting-date-num{ font-size:1.8rem; }
+  .meeting-expand{ padding:1.4rem 1.4rem; }
+
+  /* 聯絡頁面：文字尺寸 */
+  .contact-title{ font-size:1.4rem; }
+  .contact-sub{ font-size:0.85rem; margin-bottom:2rem; }
 }
 </style>
 </head>
@@ -962,7 +1035,7 @@ footer { background:var(--charcoal); color:rgba(255,255,255,0.3); text-align:cen
      PAGE: 年度計畫
 ══════════════════════════════════════ -->
 <div class="page" id="page-plans">
-  <div style="background:var(--cream);padding:5rem 5rem 3rem">
+  <div class="page-banner" style="background:var(--cream);padding:5rem 5rem 3rem">
     <p class="sec-label">Annual Plans</p>
     <h2 class="sec-title">年度計畫</h2>
     <p style="font-size:0.88rem;line-height:2;color:var(--muted);max-width:650px">115、116年度工作計畫已完成送出，以下為學會三大業務主軸的具體推動方向。</p>
@@ -1266,13 +1339,13 @@ footer { background:var(--charcoal); color:rgba(255,255,255,0.3); text-align:cen
      PAGE: 捐款支持
 ══════════════════════════════════════ -->
 <div class="page" id="page-donate">
-  <div style="background:var(--cream);padding:5rem 5rem 3rem">
+  <div class="page-banner" style="background:var(--cream);padding:5rem 5rem 3rem">
     <p class="sec-label">Support Us</p>
     <h2 class="sec-title">捐款支持</h2>
     <p style="font-size:0.88rem;line-height:2.3;color:var(--muted);max-width:620px">您的支持是學會持續前行的動力。每一份捐款都將用於推動慢活教育、支持青年藝術家、走入社區與偏鄉，讓更多人有機會體驗學習的喜悅。</p>
   </div>
   <section class="sec" style="background:var(--warm-white);padding-top:3rem">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;max-width:900px">
+    <div class="donate-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;max-width:900px">
       <div>
         <p class="sec-label">Why Donate</p>
         <h3 style="font-size:1.2rem;font-weight:300;letter-spacing:0.1em;color:var(--charcoal);margin-bottom:1.5rem">您的捐款用於</h3>
