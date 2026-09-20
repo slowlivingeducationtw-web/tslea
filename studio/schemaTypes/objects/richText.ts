@@ -14,6 +14,7 @@ export const richText = defineType({
         { title: '小標題', value: 'h3' },
         { title: '次小標', value: 'h4' },
         { title: '引言', value: 'blockquote' },
+        { title: '註解小字', value: 'note' },
       ],
       lists: [
         { title: '項目符號', value: 'bullet' },
