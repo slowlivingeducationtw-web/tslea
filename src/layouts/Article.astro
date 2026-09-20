@@ -1,0 +1,78 @@
+---
+import Base from './Base.astro';
+
+const {
+  title,
+  description,
+  datePublished,
+  author,
+  image,
+  imageAlt,
+  category = '藝術陪伴',
+  catClass = 'cat-art',
+  series,
+  accent = 'earth',
+  tags = [],
+} = Astro.props;
+
+const site = 'https://slowlivingeducation.org';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: title,
+  description,
+  datePublished,
+  image: site + image,
+  author: { '@type': 'Person', name: author },
+  publisher: {
+    '@type': 'Organization',
+    name: '臺灣慢活教育學會',
+    logo: { '@type': 'ImageObject', url: site + '/images/logo.png' },
+  },
+  inLanguage: 'zh-Hant-TW',
+  isPartOf: { '@type': 'Blog', name: '慢活專欄', url: site + '/column' },
+  mainEntityOfPage: { '@type': 'WebPage', '@id': site + Astro.url.pathname.replace(/\.html$/, '') },
+  keywords: tags.join('、'),
+};
+---
+<Base title={title} description={description} ogImage={image} jsonLd={jsonLd}>
+  <div class="page" id="page-article" data-cat="art">
+    <div class="article-page-bar">
+      <a class="article-back-btn" href="/column">
+        <span class="article-back-arrow">←</span> 返回專欄
+      </a>
+    </div>
+
+    <article class="article-page-content">
+      <div class="article-card-tags">
+        <div style="display:flex;gap:0.6rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+          <span class={`article-cat ${catClass}`}>{category}</span>
+          {series && (
+            <span style={`font-size:0.68rem;letter-spacing:0.18em;color:var(--${accent});padding:0.2rem 0.7rem;border:1px solid var(--${accent}-light)`}>{series}</span>
+          )}
+        </div>
+      </div>
+
+      <h1 class="article-title" style="font-size:1.15rem">{title}</h1>
+
+      <div class="article-image">
+        <img src={image} alt={imageAlt} loading="eager"
+             style="width:100%;height:auto;display:block;border:1px solid var(--border)">
+      </div>
+
+      <slot />
+
+      <div class="article-meta">
+        <span class="article-author">
+          <span class="author-avatar" style={`background:var(--${accent})`}>{author.slice(0, 1)}</span>
+          {author}
+        </span>
+        <span class="article-date">{datePublished.replace('-', '.').slice(0, 7)}</span>
+        <div class="article-tags">
+          {tags.map((t) => <span class="tag">{t}</span>)}
+        </div>
+      </div>
+    </article>
+  </div>
+</Base>

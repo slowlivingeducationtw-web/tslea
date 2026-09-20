@@ -1,1 +1,8 @@
 CLAUDE.md
+node_modules/
+dist/
+.astro/
+.work/
+.work-stripped.html
+_private/
+.claude/

@@ -1,0 +1,44 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base
+  title="理監事專區"
+  description="臺灣慢活教育學會理監事專區。會議記錄與內部文件放置於學會共用雲端硬碟，由秘書處開放權限。"
+  noindex={true}
+>
+  <div class="page">
+    <section class="sec" style="max-width:820px;margin:0 auto">
+      <p class="sec-label">Board Area</p>
+      <h1 class="sec-title" style="margin-bottom:1.5rem">理監事專區</h1>
+
+      <p style="font-size:0.86rem;line-height:2.2;color:var(--muted);letter-spacing:0.05em;margin-bottom:2.5rem">
+        會議記錄、年度工作計畫、財務報告與活動照片，均存放於<strong style="color:var(--charcoal);font-weight:600">學會共用雲端硬碟</strong>，
+        由秘書處依理監事名單開放存取權限。
+      </p>
+
+      <div style="border:1px solid var(--border);border-top:3px solid var(--sage);background:var(--sage-pale);padding:2rem 1.8rem;margin-bottom:1.5rem">
+        <h2 style="font-size:0.95rem;letter-spacing:0.14em;font-weight:600;margin-bottom:1rem">取得存取權限</h2>
+        <p style="font-size:0.82rem;line-height:2.1;color:var(--muted);letter-spacing:0.04em">
+          請以您的 Google 帳號來信告知秘書處，我們會將您加入學會的共用雲端硬碟。<br>
+          <a href="mailto:slowlivingeducation@gmail.com?subject=申請理監事專區存取權限"
+             style="color:var(--sage);border-bottom:1px solid var(--sage-light);text-decoration:none;padding-bottom:1px">
+            slowlivingeducation@gmail.com
+          </a>
+        </p>
+      </div>
+
+      <div style="border:1px solid var(--border);border-top:3px solid var(--earth);background:var(--earth-pale);padding:2rem 1.8rem">
+        <h2 style="font-size:0.95rem;letter-spacing:0.14em;font-weight:600;margin-bottom:1rem">為什麼文件不放在網站上</h2>
+        <p style="font-size:0.82rem;line-height:2.1;color:var(--muted);letter-spacing:0.04em">
+          公開網站無法真正保護內部文件——任何放在網站檔案裡的內容，即使前面擺了登入畫面，
+          都可能被搜尋引擎或檢視原始碼的人取得。
+          理監事文件改由雲端硬碟以帳號權限控管，是唯一可靠的做法。
+        </p>
+      </div>
+
+      <p style="font-size:0.75rem;line-height:2;color:var(--muted);letter-spacing:0.1em;margin-top:2.5rem;text-align:center">
+        如需新增會議記錄或上傳文件，請聯繫秘書處
+      </p>
+    </section>
+  </div>
+</Base>

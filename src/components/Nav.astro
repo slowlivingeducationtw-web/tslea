@@ -1,0 +1,30 @@
+---
+const { path } = Astro.props;
+const is = (p) => (path === p ? 'active' : '');
+---
+<nav id="mainNav">
+  <a href="/" class="nav-logo">
+    <img src="/images/logo.png" alt="臺灣慢活教育學會" width="150" height="36"
+         style="height:36px;width:auto;display:block;mix-blend-mode:multiply;filter:invert(1);">
+  </a>
+  <button class="nav-toggle" id="navToggle" aria-label="選單" aria-expanded="false" aria-controls="navLinks">
+    <span class="bars"><span></span><span></span><span></span></span>
+    <span class="close-x">✕</span>
+  </button>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="/" class={is('/')}>首頁</a></li>
+    <li class="nav-dropdown">
+      <button class="dropdown-trigger" aria-expanded="false">關於學會 <span class="dropdown-arrow">▼</span></button>
+      <div class="dropdown-menu">
+        <a href="/#about-sec">學會簡介</a>
+        <a href="/board">理監事名單</a>
+        <a href="/#themes-sec">三大共學主題</a>
+      </div>
+    </li>
+    <li><a href="/column" class={is('/column')}>慢活專欄</a></li>
+    <li><a href="/plans" class={is('/plans')}>年度計畫</a></li>
+    <li><a href="/contact" class={is('/contact')}>聯絡我們</a></li>
+    <li><a href="/donate" class={is('/donate')}>捐款支持</a></li>
+    <li><a href="/board-area" class={is('/board-area')}>理監事專區</a></li>
+  </ul>
+</nav>

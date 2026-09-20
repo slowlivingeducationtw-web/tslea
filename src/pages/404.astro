@@ -1,0 +1,15 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="找不到頁面" description="您要找的頁面不存在，或已經移動位置。" noindex={true}>
+  <div class="page">
+    <section class="sec" style="max-width:640px;margin:0 auto;text-align:center">
+      <p class="sec-label">404</p>
+      <h1 class="sec-title" style="margin-bottom:1.5rem">找不到這個頁面</h1>
+      <p style="font-size:0.86rem;line-height:2.2;color:var(--muted);letter-spacing:0.05em;margin-bottom:2.5rem">
+        您要找的頁面不存在，或已經移動位置。<br>慢慢來，我們陪您回到起點。
+      </p>
+      <a href="/" class="btn-primary" style="display:inline-block;text-decoration:none">回首頁</a>
+    </section>
+  </div>
+</Base>

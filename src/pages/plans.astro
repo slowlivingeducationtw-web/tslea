@@ -1,0 +1,146 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="年度計畫"
+      description="臺灣慢活教育學會115至116年度工作計畫：會務運作、業務發展、專案計畫與財務規劃四大面向。">
+  <div class="page" id="page-plans">
+      <div class="page-banner" style="background:var(--cream);padding:5rem 5rem 3rem">
+        <p class="sec-label">Annual Plans</p>
+        <h2 class="sec-title">年度計畫</h2>
+        <p style="font-size:0.88rem;line-height:2;color:var(--muted);max-width:650px">115、116年度工作計畫已完成送出，以下為學會三大業務主軸的具體推動方向。</p>
+      </div>
+
+      <section class="sec" style="background:var(--warm-white);padding-top:3rem">
+        <div class="plans-tabs">
+          <button class="plan-tab active" data-plan="org" type="button" role="tab" aria-selected="true" aria-controls="plan-org">會務運作</button>
+          <button class="plan-tab" data-plan="learn" type="button" role="tab" aria-selected="false" aria-controls="plan-learn">業務發展</button>
+          <button class="plan-tab" data-plan="project" type="button" role="tab" aria-selected="false" aria-controls="plan-project">專案計畫</button>
+          <button class="plan-tab" data-plan="finance" type="button" role="tab" aria-selected="false" aria-controls="plan-finance">財務規劃</button>
+        </div>
+
+        <div class="plan-content active" id="plan-org">
+          <div class="plan-intro">
+            <p>學會已向內政部遞交立案資料，待核發統一編號後即可申請帳戶，正式展開會務運作。</p>
+            <br>
+            <p>會務核心在於確保協會<strong>合法、透明、永續</strong>地運作，讓每位會員都能在安心的組織架構中共同成長。</p>
+            <br>
+            <p>建議每年召開<strong>兩次會員大會</strong>：第一次說明年度計畫與方向，第二次報告年度成果，並提供會員交流機會，持續吸引認同慢活理念的新夥伴加入。</p>
+          </div>
+          <div class="plan-items">
+            <div class="plan-item">
+              <div class="plan-item-title">🏛️ 立案與法人登記</div>
+              <div class="plan-item-desc">向內政部完成立案，取得統一編號，開設協會帳戶。</div>
+            </div>
+            <div class="plan-item">
+              <div class="plan-item-title">📋 每年兩次會員大會</div>
+              <div class="plan-item-desc">上半年說明年度計畫，下半年報告成果並開放交流。</div>
+            </div>
+            <div class="plan-item">
+              <div class="plan-item-title">🤝 理監事會議定期召開</div>
+              <div class="plan-item-desc">定期凝聚決策共識，確保各業務方向有效推進。</div>
+            </div>
+            <div class="plan-item">
+              <div class="plan-item-title">📣 會員招募與社群經營</div>
+              <div class="plan-item-desc">以開放、友善的方式吸引認同慢活理念的新夥伴。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="plan-content" id="plan-learn">
+          <div class="plan-intro">
+            <p>業務核心是「學習」。我們相信，當每個人都能進入<strong>學習型狀態</strong>，就能從中獲得喜悅與成就感。</p>
+            <br>
+            <p>線上共學活動規劃為40分鐘講座與工作坊，內容錄影上傳YouTube，讓知識的流動不受時間限制。</p>
+            <br>
+            <p>學會鼓勵<strong>會員擔任分享者</strong>，主題需與慢活連結，讓每個人的生命智慧都成為學會的共同資產。</p>
+          </div>
+          <div class="plan-items">
+            <div class="plan-item">
+              <div class="plan-item-title">🎙️ 線上共學講座</div>
+              <div class="plan-item-desc">每月40分鐘線上講座，會員輪流擔任主講，錄影上傳YouTube。</div>
+            </div>
+            <div class="plan-item">
+              <div class="plan-item-title">✍️ 慢活專欄</div>
+              <div class="plan-item-desc">邀請老師撰寫旅遊、精油、漢字等慢活主題文章，於網站公開刊載。</div>
+            </div>
+            <div class="plan-item">
+              <div class="plan-item-title">🛠️ 線上工作坊</div>
+              <div class="plan-item-desc">設計可動手操作的慢活體驗活動，讓學習更具身體感。</div>
+            </div>
+            <div class="plan-item">
+              <div class="plan-item-title">📺 YouTube頻道建立</div>
+              <div class="plan-item-desc">系統化整理課程影片，打造學會的線上學習資料庫。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="plan-content" id="plan-project">
+          <div class="plan-intro">
+            <p>專案計畫旨在將「學習的樂趣」推廣給更廣泛的群體，走出線上，深入社區、校園與各地角落。</p>
+            <br>
+            <p><strong>慢旅共學計畫</strong>首站選在嘉義，以旅行作為學習方式，體驗在地的生態、文化與人情，是慢活最真實的實踐。</p>
+          </div>
+          <div class="plan-items">
+            <div class="plan-item">
+              <div class="plan-item-title">🏘️ 社區慢活講座</div>
+              <div class="plan-item-desc">透過音樂、芳香、手作等體驗活動介紹協會，連結在地社群。</div>
+            </div>
+            <div class="plan-item">
+              <div class="plan-item-title">🏫 SEL校園講座</div>
+              <div class="plan-item-desc">針對體制內老師推廣社會情緒學習，將實踐案例帶入校園。</div>
+            </div>
+            <div class="plan-item">
+              <div class="plan-item-title">🚂 慢旅共學計畫（嘉義首站）</div>
+              <div class="plan-item-desc">結合在地文化與生態探索，讓旅行成為深度共學的媒介。</div>
+            </div>
+            <div class="plan-item">
+              <div class="plan-item-title">🎭 青年藝術家獎助計畫</div>
+              <div class="plan-item-desc">支持有行動力的青年創作者，以苗栗行為藝術活動作為啟動項目。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="plan-content" id="plan-finance">
+          <div class="plan-intro">
+            <p>學會目前主要收入來自<strong>會費</strong>，用於基礎行政運作。秉持謹慎財務原則，不隨意動用會費。</p>
+            <br>
+            <p>各項專案活動經費將盡量尋求外部資源，目標是建立<strong>多元財務支柱</strong>，確保學會長期穩健發展。</p>
+          </div>
+          <div class="plan-items">
+            <div class="plan-item">
+              <div class="plan-item-title">💰 使用者付費機制</div>
+              <div class="plan-item-desc">部分工作坊與活動採收費制，讓優質課程能夠永續辦理。</div>
+            </div>
+            <div class="plan-item">
+              <div class="plan-item-title">🤝 外部贊助連結</div>
+              <div class="plan-item-desc">透過合作夥伴連結企業與個人贊助，支持公益性專案活動。</div>
+            </div>
+            <div class="plan-item">
+              <div class="plan-item-title">📑 政府補助申請</div>
+              <div class="plan-item-desc">針對教育、文化、社區類型專案，積極申請各級政府補助資源。</div>
+            </div>
+            <div class="plan-item">
+              <div class="plan-item-title">🛍️ 學會特色產品開發</div>
+              <div class="plan-item-desc">未來規劃開發具慢活精神的學會周邊產品，創造自主收益。</div>
+            </div>
+          </div>
+        </div>
+      </section>
+  </div>
+  <script is:inline>
+    (function () {
+      const tabs = document.querySelectorAll('.plan-tab');
+      const panels = document.querySelectorAll('.plan-content');
+      tabs.forEach(function (t) {
+        t.addEventListener('click', function () {
+          tabs.forEach(function (x) { x.classList.remove('active'); x.setAttribute('aria-selected', 'false'); });
+          panels.forEach(function (p) { p.classList.remove('active'); });
+          t.classList.add('active');
+          t.setAttribute('aria-selected', 'true');
+          const panel = document.getElementById('plan-' + t.dataset.plan);
+          if (panel) panel.classList.add('active');
+        });
+      });
+    })();
+  </script>
+</Base>

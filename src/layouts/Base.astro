@@ -1,0 +1,136 @@
+---
+import '../styles/global.css';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+
+const {
+  title,
+  description,
+  ogImage = '/og-image.png',
+  noindex = false,
+  jsonLd = null,
+} = Astro.props;
+
+const site = 'https://slowlivingeducation.org';
+// build.format 為 'file'，首頁的 pathname 是 /index.html，要正規化回 '/'
+const path =
+  Astro.url.pathname
+    .replace(/\.html$/, '')
+    .replace(/\/index$/, '/')
+    .replace(/(.)\/$/, '$1') || '/';
+const canonical = site + (path === '/' ? '' : path);
+const fullTitle = path === '/' ? title : `${title}｜臺灣慢活教育學會`;
+
+const org = {
+  '@context': 'https://schema.org',
+  '@type': 'NGO',
+  name: '臺灣慢活教育學會',
+  alternateName: ['Taiwan Slow Living Education Association', 'Slow Living Education Society of Taiwan'],
+  url: site,
+  logo: site + '/images/logo.png',
+  image: site + ogImage,
+  email: 'slowlivingeducation@gmail.com',
+  description:
+    '臺灣慢活教育學會以「身心健康」「藝術陪伴」「生態永續」三大共學主題，推廣慢活教育與終身學習。',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: '建台街一巷13號',
+    addressLocality: '苗栗市',
+    addressRegion: '苗栗縣',
+    addressCountry: 'TW',
+  },
+  areaServed: { '@type': 'Country', name: '臺灣' },
+};
+---
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{fullTitle}</title>
+<meta name="description" content={description}>
+<link rel="canonical" href={canonical}>
+{noindex && <meta name="robots" content="noindex, nofollow">}
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="臺灣慢活教育學會">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:title" content={fullTitle}>
+<meta property="og:description" content={description}>
+<meta property="og:url" content={canonical}>
+<meta property="og:image" content={site + ogImage}>
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="臺灣慢活教育學會">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content={fullTitle}>
+<meta name="twitter:description" content={description}>
+<meta name="twitter:image" content={site + ogImage}>
+
+<meta name="theme-color" content="#f5f0e8">
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+
+<script type="application/ld+json" set:html={JSON.stringify(org)} />
+{jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+</head>
+<body>
+<Nav path={path} />
+<slot />
+<Footer />
+
+<script is:inline>
+// ── 行動版選單 ──
+(function () {
+  const links = document.getElementById('navLinks');
+  const btn = document.getElementById('navToggle');
+  if (!btn || !links) return;
+  btn.addEventListener('click', function () {
+    const isOpen = links.classList.toggle('open');
+    btn.classList.toggle('open', isOpen);
+    btn.setAttribute('aria-expanded', String(isOpen));
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  });
+})();
+
+// ── 捲動顯現 ──
+(function () {
+  const secs = document.querySelectorAll('.sec');
+  if (!secs.length) return;
+  if (!('IntersectionObserver' in window)) {
+    secs.forEach(function (s) { s.classList.add('vis'); });
+    return;
+  }
+  const io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { if (e.isIntersecting) e.target.classList.add('vis'); });
+  }, { threshold: 0.08 });
+  secs.forEach(function (s) { io.observe(s); });
+  // 首屏區塊立即顯現，避免載入時空白
+  requestAnimationFrame(function () {
+    secs.forEach(function (s) {
+      if (s.getBoundingClientRect().top < window.innerHeight) s.classList.add('vis');
+    });
+  });
+})();
+
+// ── 導覽列捲動縮放 ──
+(function () {
+  const nav = document.getElementById('mainNav');
+  if (!nav) return;
+  let ticking = false;
+  window.addEventListener('scroll', function () {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      nav.classList.toggle('scrolled', window.scrollY > 60);
+      ticking = false;
+    });
+  }, { passive: true });
+})();
+</script>
+</body>
+</html>
