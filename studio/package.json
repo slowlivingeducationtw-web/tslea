@@ -7,7 +7,8 @@
     "dev": "sanity dev",
     "build": "sanity build",
     "deploy": "sanity deploy",
-    "export": "sanity dataset export production"
+    "export": "sanity dataset export production",
+    "test:structure": "tsx test-structure.mts"
   },
   "dependencies": {
     "@sanity/locale-zh-hant": "^2.2.39",
@@ -16,5 +17,8 @@
     "react-dom": "^19.3.0",
     "sanity": "^6.15.0",
     "styled-components": "^6.5.3"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.13"
   }
 }
