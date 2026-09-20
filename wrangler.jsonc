@@ -1,0 +1,14 @@
+{
+  // Cloudflare Workers 靜態資產設定（取代舊的 Pages 專案）
+  // Astro build 產出 dist/，由 Workers 直接以靜態資產方式服務，沒有伺服器程式碼。
+  "name": "tslea",
+  "compatibility_date": "2026-09-20",
+  "assets": {
+    "directory": "./dist",
+    // astro.config.mjs 用 trailingSlash:'never' + build.format:'file'
+    // 所以 /board 要對應到 board.html，且 /board/ 要導回 /board
+    "html_handling": "drop-trailing-slash",
+    // 找不到的路徑回傳我們自己的 404 頁
+    "not_found_handling": "404-page"
+  }
+}
