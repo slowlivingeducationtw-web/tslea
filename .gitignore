@@ -13,3 +13,8 @@ studio/dist/
 studio/.sanity/
 studio/schema.json
 scripts/out/
+
+# 機密
+.env
+.env.*
+!.env.example

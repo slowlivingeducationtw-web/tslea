@@ -1,67 +1,92 @@
 ---
-import Base from '../layouts/Base.astro';
+import Base from '../layouts/Base.astro'
+import { sanity, Q } from '../lib/sanity'
+
+type Person = {
+  name: string
+  role: string
+  group: 'director' | 'supervisor' | 'secretariat' | 'advisor'
+  note?: string
+  term: number
+}
+
+const all = await sanity.fetch<Person[]>(Q.people)
+
+// 只顯示最新一屆。換屆時在後台新增第 2 屆資料即可，舊的留著不動。
+const term = Math.max(...all.map((p) => p.term ?? 1), 1)
+const people = all.filter((p) => (p.term ?? 1) === term)
+
+const by = (g: Person['group']) => people.filter((p) => p.group === g)
+
+// 理事組分兩排：正副理事長用大卡片，其餘理事用小卡片
+const directors = by('director')
+const leaders = directors.filter((p) => p.role.includes('理事長'))
+const members = directors.filter((p) => !p.role.includes('理事長'))
+
+const GROUPS = [
+  { key: 'supervisor', label: '監　事', accent: 'sky', bg: 'sky-pale', min: 130 },
+  { key: 'secretariat', label: '行政秘書處', accent: 'sage', bg: 'sage-pale', min: 130 },
+  { key: 'advisor', label: '顧　問', accent: 'earth', bg: 'earth-pale', min: 200 },
+] as const
 ---
-<Base title="理監事名單"
-      description="臺灣慢活教育學會第一屆理事長、常務理事、理事與監事名單，以及各自的專業領域介紹。">
+<Base
+  title="理監事名單"
+  description={`臺灣慢活教育學會第${term}屆理事長、副理事長、理事、監事與顧問名單。`}
+>
   <div class="page" id="page-board">
-      <div class="board-page-header">
-        <p class="sec-label">Our Team</p>
-        <h2 class="sec-title">第一屆理監事名單</h2>
-      </div>
-      <section class="sec" style="background:var(--warm-white);padding-top:3rem">
+    <div class="board-page-header">
+      <p class="sec-label">Our Team</p>
+      <h2 class="sec-title">第{term === 1 ? '一' : term}屆理監事名單</h2>
+    </div>
 
-        <!-- 理事 -->
-        <div style="margin-bottom:2.5rem">
-          <div style="font-size:0.72rem;letter-spacing:0.25em;color:var(--earth);margin-bottom:1.5rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border)">理　事</div>
+    <section class="sec" style="background:var(--warm-white);padding-top:3rem">
+      {/* 理事 */}
+      <div style="margin-bottom:2.5rem">
+        <div style="font-size:0.72rem;letter-spacing:0.25em;color:var(--earth);margin-bottom:1.5rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border)">理　事</div>
+
+        {leaders.length > 0 && (
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1px;margin-bottom:1px">
-            <div style="background:var(--earth-pale);padding:1.4rem 1.5rem;border-top:2px solid var(--earth)">
-              <div style="font-size:0.65rem;letter-spacing:0.2em;color:var(--earth);margin-bottom:0.4rem">理事長</div>
-              <div style="font-size:1rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">陳鵬文</div>
+            {leaders.map((p, i) => (
+              <div style={`background:var(--earth-pale);padding:1.4rem 1.5rem;border-top:2px solid var(--earth${i === 0 ? '' : '-light'})`}>
+                <div style="font-size:0.65rem;letter-spacing:0.2em;color:var(--earth);margin-bottom:0.4rem">{p.role}</div>
+                <div style="font-size:1rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">{p.name}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {members.length > 0 && (
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:1px">
+            {members.map((p) => (
+              <div style="background:var(--cream);padding:1.2rem 1.5rem">
+                <div style="font-size:0.63rem;letter-spacing:0.2em;color:var(--muted);margin-bottom:0.35rem">{p.role}</div>
+                <div style="font-size:0.95rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">{p.name}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {GROUPS.map((g, gi) => {
+        const list = by(g.key)
+        if (list.length === 0) return null
+        return (
+          <div style={gi === GROUPS.length - 1 ? '' : 'margin-bottom:2.5rem'}>
+            <div style={`font-size:0.72rem;letter-spacing:0.25em;color:var(--${g.accent});margin-bottom:1.5rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border)`}>{g.label}</div>
+            <div style={`display:grid;grid-template-columns:repeat(auto-fill,minmax(${g.min}px,1fr));gap:1px`}>
+              {list.map((p) => (
+                <div style={`background:var(--${g.bg});padding:1.2rem 1.5rem`}>
+                  <div style={`font-size:0.63rem;letter-spacing:0.2em;color:var(--${g.accent});margin-bottom:0.35rem`}>{p.role}</div>
+                  <div style="font-size:0.9rem;font-weight:600;letter-spacing:0.1em;color:var(--charcoal);line-height:1.6">
+                    {p.name}
+                    {p.note && <><br /><span style="font-size:0.78rem;font-weight:400;letter-spacing:0.06em;color:var(--muted)">{p.note}</span></>}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div style="background:var(--earth-pale);padding:1.4rem 1.5rem;border-top:2px solid var(--earth-light)">
-              <div style="font-size:0.65rem;letter-spacing:0.2em;color:var(--earth);margin-bottom:0.4rem">副理事長</div>
-              <div style="font-size:1rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">邱曉琳</div>
-            </div>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:1px">
-            <div style="background:var(--cream);padding:1.2rem 1.5rem"><div style="font-size:0.63rem;letter-spacing:0.2em;color:var(--muted);margin-bottom:0.35rem">理事</div><div style="font-size:0.95rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">張世宗</div></div>
-            <div style="background:var(--cream);padding:1.2rem 1.5rem"><div style="font-size:0.63rem;letter-spacing:0.2em;color:var(--muted);margin-bottom:0.35rem">理事</div><div style="font-size:0.95rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">陳君山</div></div>
-            <div style="background:var(--cream);padding:1.2rem 1.5rem"><div style="font-size:0.63rem;letter-spacing:0.2em;color:var(--muted);margin-bottom:0.35rem">理事</div><div style="font-size:0.95rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">張蕊仙</div></div>
-            <div style="background:var(--cream);padding:1.2rem 1.5rem"><div style="font-size:0.63rem;letter-spacing:0.2em;color:var(--muted);margin-bottom:0.35rem">理事</div><div style="font-size:0.95rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">謝啟彬</div></div>
-            <div style="background:var(--cream);padding:1.2rem 1.5rem"><div style="font-size:0.63rem;letter-spacing:0.2em;color:var(--muted);margin-bottom:0.35rem">理事</div><div style="font-size:0.95rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">鄭麗寶</div></div>
-            <div style="background:var(--cream);padding:1.2rem 1.5rem"><div style="font-size:0.63rem;letter-spacing:0.2em;color:var(--muted);margin-bottom:0.35rem">理事</div><div style="font-size:0.95rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">郭純嵐</div></div>
-            <div style="background:var(--cream);padding:1.2rem 1.5rem"><div style="font-size:0.63rem;letter-spacing:0.2em;color:var(--muted);margin-bottom:0.35rem">理事</div><div style="font-size:0.95rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">吳順卿</div></div>
-          </div>
-        </div>
-
-        <!-- 監事 -->
-        <div style="margin-bottom:2.5rem">
-          <div style="font-size:0.72rem;letter-spacing:0.25em;color:var(--sky);margin-bottom:1.5rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border)">監　事</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:1px">
-            <div style="background:var(--sky-pale);padding:1.2rem 1.5rem"><div style="font-size:0.63rem;letter-spacing:0.2em;color:var(--sky);margin-bottom:0.35rem">監事</div><div style="font-size:0.95rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">楊秋玉</div></div>
-            <div style="background:var(--sky-pale);padding:1.2rem 1.5rem"><div style="font-size:0.63rem;letter-spacing:0.2em;color:var(--sky);margin-bottom:0.35rem">監事</div><div style="font-size:0.95rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">陳建城</div></div>
-            <div style="background:var(--sky-pale);padding:1.2rem 1.5rem"><div style="font-size:0.63rem;letter-spacing:0.2em;color:var(--sky);margin-bottom:0.35rem">監事</div><div style="font-size:0.95rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">李佳穗</div></div>
-          </div>
-        </div>
-
-        <!-- 行政秘書處 -->
-        <div style="margin-bottom:2.5rem">
-          <div style="font-size:0.72rem;letter-spacing:0.25em;color:var(--sage);margin-bottom:1.5rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border)">行政秘書處</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:1px">
-            <div style="background:var(--sage-pale);padding:1.2rem 1.5rem"><div style="font-size:0.63rem;letter-spacing:0.2em;color:var(--sage);margin-bottom:0.35rem">秘書長</div><div style="font-size:0.95rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">許宸豪</div></div>
-            <div style="background:var(--sage-pale);padding:1.2rem 1.5rem"><div style="font-size:0.63rem;letter-spacing:0.2em;color:var(--sage);margin-bottom:0.35rem">總幹事</div><div style="font-size:0.95rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">李亮誼</div></div>
-          </div>
-        </div>
-
-        <!-- 顧問 -->
-        <div>
-          <div style="font-size:0.72rem;letter-spacing:0.25em;color:var(--earth);margin-bottom:1.5rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border)">顧　問</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px">
-            <div style="background:var(--earth-pale);padding:1.2rem 1.5rem"><div style="font-size:0.63rem;letter-spacing:0.2em;color:var(--earth);margin-bottom:0.35rem">財務顧問</div><div style="font-size:0.88rem;font-weight:600;letter-spacing:0.06em;color:var(--charcoal);line-height:1.6">李臺鴒會計稅務<br>記帳士事務所</div></div>
-            <div style="background:var(--earth-pale);padding:1.2rem 1.5rem"><div style="font-size:0.63rem;letter-spacing:0.2em;color:var(--earth);margin-bottom:0.35rem">旅遊顧問</div><div style="font-size:0.88rem;font-weight:600;letter-spacing:0.08em;color:var(--charcoal)">仁愛旅行社</div></div>
-            <div style="background:var(--earth-pale);padding:1.2rem 1.5rem"><div style="font-size:0.63rem;letter-spacing:0.2em;color:var(--earth);margin-bottom:0.35rem">資訊顧問</div><div style="font-size:0.88rem;font-weight:600;letter-spacing:0.08em;color:var(--charcoal)">蔡尚諭</div></div>
-          </div>
-        </div>
-      </section>
+        )
+      })}
+    </section>
   </div>
 </Base>

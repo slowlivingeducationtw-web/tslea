@@ -1,84 +1,112 @@
 ---
-import Base from '../layouts/Base.astro';
+import Base from '../layouts/Base.astro'
+import { sanity, Q, imageUrl, imageDims } from '../lib/sanity'
+
+const CATEGORIES = [
+  { value: 'all', label: '全部' },
+  { value: 'health', label: '身心健康' },
+  { value: 'art', label: '藝術陪伴' },
+  { value: 'eco', label: '生態永續' },
+  { value: 'travel', label: '慢旅共學' },
+  { value: 'other', label: '其他' },
+]
+const CAT_LABEL: Record<string, string> = Object.fromEntries(
+  CATEGORIES.filter((c) => c.value !== 'all').map((c) => [c.value, c.label]),
+)
+
+type Article = {
+  title: string
+  slug: string
+  excerpt?: string
+  category: string
+  series?: string
+  accent: 'sage' | 'earth' | 'sky'
+  publishedAt: string
+  tags?: string[]
+  cover?: { image: any; alt?: string }
+  author?: { name: string; title?: string; initial?: string; accent?: string }
+}
+
+const articles = await sanity.fetch<Article[]>(Q.articles)
+const ym = (d: string) => (d ? d.slice(0, 7).replace('-', '.') : '')
 ---
-<Base title="慢活專欄"
-      description="由學會各領域會員執筆的慢活專欄——精油氣味、漢字文化、生態永續與慢旅共學，以文字分享慢活實踐的日常智慧。">
+<Base
+  title="慢活專欄"
+  description="由學會各領域會員執筆的慢活專欄——精油氣味、漢字文化、生態永續與慢旅共學，以文字分享慢活實踐的日常智慧。"
+>
   <div class="page" id="page-column">
-      <div class="col-header">
-        <div class="col-header-inner">
-          <p class="sec-label">Column</p>
-          <h2 class="sec-title" style="margin-bottom:1rem">慢活專欄</h2>
-          <p style="font-size:0.85rem;line-height:2;color:var(--muted);max-width:600px;">由學會各領域會員執筆，以文字、圖文分享慢活實踐的日常智慧。每一篇文章，都是一個邀請——邀請你放慢腳步，重新與自己相遇。</p>
-          <div class="col-filter-bar">
-            <button class="filter-btn active" data-filter="all" type="button">全部</button>
-            <button class="filter-btn" data-filter="health" type="button">身心健康</button>
-            <button class="filter-btn" data-filter="art" type="button">藝術陪伴</button>
-            <button class="filter-btn" data-filter="eco" type="button">生態永續</button>
-            <button class="filter-btn" data-filter="travel" type="button">慢旅共學</button>
-            <button class="filter-btn" data-filter="other" type="button">其他</button>
+    <div class="col-header">
+      <div class="col-header-inner">
+        <p class="sec-label">Column</p>
+        <h2 class="sec-title" style="margin-bottom:1rem">慢活專欄</h2>
+        <p style="font-size:0.85rem;line-height:2;color:var(--muted);max-width:600px;">由學會各領域會員執筆，以文字、圖文分享慢活實踐的日常智慧。每一篇文章，都是一個邀請——邀請你放慢腳步，重新與自己相遇。</p>
+        <div class="col-filter-bar">
+          {CATEGORIES.map((c, i) => (
+            <button class={`filter-btn${i === 0 ? ' active' : ''}`} data-filter={c.value} type="button">{c.label}</button>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div class="articles-grid" id="articlesGrid">
+      {articles.map((a) => {
+        const src = imageUrl(a.cover?.image, 1200)
+        const d = imageDims(a.cover?.image)
+        return (
+          <div
+            class="article-card"
+            data-cat={a.category}
+            style={`grid-column:1/-1;border-top:3px solid var(--${a.accent});background:var(--${a.accent}-pale)`}
+          >
+            <div class="article-card-tags">
+              <div style="display:flex;gap:0.6rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+                <span class={`article-cat cat-${a.category}`}>{CAT_LABEL[a.category] ?? '其他'}</span>
+                {a.series && (
+                  <span style={`font-size:0.68rem;letter-spacing:0.18em;color:var(--${a.accent});padding:0.2rem 0.7rem;border:1px solid var(--${a.accent}-light)`}>{a.series}</span>
+                )}
+              </div>
+            </div>
+
+            <h3 class="article-title" style="font-size:1.15rem">
+              <a href={`/column/${a.slug}`} style="color:inherit;text-decoration:none">{a.title}</a>
+            </h3>
+
+            {a.excerpt && <p class="article-excerpt">{a.excerpt}</p>}
+
+            {src && (
+              <div class="article-image">
+                <a href={`/column/${a.slug}`}>
+                  <img src={src} alt={a.cover?.alt || a.title} loading="lazy" decoding="async"
+                       width={d?.width} height={d?.height}
+                       style="width:100%;height:auto;display:block;border:1px solid var(--border)" />
+                </a>
+              </div>
+            )}
+
+            <a class={`read-more-btn read-more-${a.accent}`} href={`/column/${a.slug}`}>閱讀全文 →</a>
+
+            <div class="article-meta">
+              {a.author && (
+                <span class="article-author">
+                  <span class="author-avatar" style={`background:var(--${a.author.accent || a.accent})`}>
+                    {a.author.initial || a.author.name.slice(0, 1)}
+                  </span>
+                  {a.author.name}{a.author.title ? `・${a.author.title}` : ''}
+                </span>
+              )}
+              <span class="article-date">{ym(a.publishedAt)}</span>
+              {a.tags && a.tags.length > 0 && (
+                <div class="article-tags">
+                  {a.tags.map((t) => <span class="tag">{t}</span>)}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
-
-      <div class="articles-grid" id="articlesGrid">
-
-        <!-- 真實文章 01 -->
-        <div class="article-card" data-cat="art" data-article-id="1" style="grid-column:1/-1;border-top:3px solid var(--earth);background:var(--earth-pale)">
-          <div class="article-card-tags"><div style="display:flex;gap:0.6rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
-                <span class="article-cat cat-art">藝術陪伴</span>
-                <span style="font-size:0.68rem;letter-spacing:0.18em;color:var(--earth);padding:0.2rem 0.7rem;border:1px solid var(--earth-light)">慢活文字專欄｜每月一味</span>
-              </div></div>
-          <h3 class="article-title" style="font-size:1.15rem"><a href="/column/tea-tree-february" style="color:inherit;text-decoration:none">跟著氣味學慢活——二月・澳洲茶樹</a></h3>
-          <p class="article-excerpt">過年期間的各種掃除，總是需要一點動力與決心。清理堆積的雜物，掃除角落的灰塵，也把這一年來的疲憊心情與煩亂，一起打包丟掉……</p>
-          <div class="article-image"><img src="/images/column-tea-tree.jpg" alt="跟著氣味學慢活——二月・澳洲茶樹" style="width:100%;height:auto;display:block;border:1px solid var(--border)"></div>
-          <a class="read-more-btn read-more-earth" href="/column/tea-tree-february">閱讀全文 →</a>
-          <div class="article-meta">
-                <span class="article-author">
-                  <span class="author-avatar" style="background:var(--earth)">郭</span>
-                  郭純嵐（小嵐老師）・臺灣慢活教育學會創會會員
-                </span>
-                <span class="article-date">2026.02</span>
-                <div class="article-tags">
-                  <span class="tag">跟著氣味學慢活</span>
-                  <span class="tag">精油</span>
-                  <span class="tag">茶樹</span>
-                  <span class="tag">苗栗三義</span>
-                  <span class="tag">慢活文字專欄</span>
-                </div>
-              </div>
-        </div>
-
-        <!-- 真實文章 02 -->
-        <div class="article-card" data-cat="art" data-article-id="2" style="grid-column:1/-1;border-top:3px solid var(--sage);background:var(--sage-pale)">
-          <div class="article-card-tags"><div style="display:flex;gap:0.6rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
-                <span class="article-cat cat-art">藝術陪伴</span>
-                <span style="font-size:0.68rem;letter-spacing:0.18em;color:var(--sage);padding:0.2rem 0.7rem;border:1px solid var(--sage-light)">慢活文字專欄｜每月一字</span>
-              </div></div>
-          <h3 class="article-title" style="font-size:1.15rem"><a href="/column/mu-march" style="color:inherit;text-decoration:none">跟著文字學慢活——三月・木</a></h3>
-          <p class="article-excerpt">「木」字是一棵樹，字體演變中一直看得出中間是樹幹，上面是樹枝，下面是樹根。古人創造漢字時要凸顯「特徵」，以便與相像的字區分……</p>
-          <div class="article-image"><img src="/images/mu-card-writing.jpg" style="width:100%;height:auto;display:block;border:1px solid var(--border)" alt="木字部件卡-書寫"></div>
-          <a class="read-more-btn read-more-sage" href="/column/mu-march">閱讀全文 →</a>
-          <div class="article-meta">
-                <span class="article-author">
-                  <span class="author-avatar" style="background:var(--sage)">陳</span>
-                  陳玉明（小明老師）・臺灣慢活教育學會創會會員・《漢字好好教 好好教漢字》作者之一
-                </span>
-                <span class="article-date">2026.03</span>
-                <div class="article-tags">
-                  <span class="tag">跟著文字學慢活</span>
-                  <span class="tag">漢字</span>
-                  <span class="tag">木</span>
-                  <span class="tag">慢活文字專欄</span>
-                </div>
-              </div>
-        </div>
-
-    </div><!-- /articles-grid -->
-
-      <div style="padding:3rem 5rem;background:var(--cream);text-align:center;border-top:1px solid var(--border)">
-        <p style="font-size:0.8rem;color:var(--muted);letter-spacing:0.15em">想為慢活專欄投稿？歡迎聯繫學會秘書處</p>
-      </div>
+        )
+      })}
+    </div>
   </div>
+
   <script is:inline>
     (function () {
       const btns = document.querySelectorAll('.filter-btn');

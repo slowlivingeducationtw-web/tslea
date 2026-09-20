@@ -324,7 +324,7 @@ docs.append({
     '_type': 'plansPage',
     'label': 'Annual Plans',
     'title': '年度計畫',
-    'intro': '115、116年度二分計畫已完成送出，以下為學會三大業務主軸的具體推動方向。',
+    'intro': '115、116年度工作計畫已完成送出，以下為學會三大業務主軸的具體推動方向。',
     'tracks': [
         {'_type': 'trackIntro', '_key': key(), 'track': 'org', 'body': rich(
             para('學會已向內政部遞交立案資料，待核發統一編號後即可申請帳戶，正式展開會務運作。'),

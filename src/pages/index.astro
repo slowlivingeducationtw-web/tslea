@@ -1,109 +1,131 @@
 ---
-import Base from '../layouts/Base.astro';
+import Base from '../layouts/Base.astro'
+import PortableText from '../components/PortableText.astro'
+import { sanity, fetchOne, Q } from '../lib/sanity'
+
+type Home = {
+  eyebrow?: string
+  headlineBefore?: string
+  headlineAccent?: string
+  headlineAfter?: string
+  subheadEn?: string
+  lead?: string
+  heroTags?: string[]
+  aboutLabel?: string
+  aboutTitle?: string
+  aboutBody?: any
+  eventsLabel?: string
+  eventsTitle?: string
+}
+type Event = {
+  title: string
+  dateLabel: string
+  icon?: string
+  description?: string
+  tag?: string
+  showInMarquee?: boolean
+  showAsCard?: boolean
+}
+
+const home = await fetchOne<Home>(Q.home, {}, '首頁文案')
+const events = await sanity.fetch<Event[]>(Q.events)
+
+const marquee = events.filter((e) => e.showInMarquee !== false)
+const cards = events.filter((e) => e.showAsCard !== false)
+
+// 卡片色塊循環，維持原本三張卡片的配色變化
+const GRADIENTS = [
+  'linear-gradient(135deg,#c8d4bc,#a8b89a)',
+  'linear-gradient(135deg,#d4c4a8,#c8a878)',
+  'linear-gradient(135deg,#b8ccd8,#8aaac0)',
+]
+
+const marqueeItems = marquee.map((e) => `${e.dateLabel} ${e.title}`)
 ---
-<Base title="臺灣慢活教育學會｜慢下來，才看得見生活"
-      description="臺灣慢活教育學會以身心健康、藝術陪伴、生態永續三大共學主題，推廣慢活教育與終身學習。立案於苗栗，歡迎認同理念的朋友一起放慢腳步。">
+<Base
+  title="臺灣慢活教育學會｜慢下來，才看得見生活"
+  description="臺灣慢活教育學會以身心健康、藝術陪伴、生態永續三大共學主題，推廣慢活教育與終身學習。立案於苗栗，歡迎認同理念的朋友一起放慢腳步。"
+>
   <div class="page" id="page-home">
-      <!-- HERO -->
-      <div class="hero">
-        <div class="hero-left">
-          <p class="hero-year">Est. 2026 · 臺灣</p>
-          <h1 class="hero-title">
-            在學習中找到<em>慢活</em><br>的節奏與喜悅
-          </h1>
-          <p class="hero-en">Taiwan Slow Living Education Association</p>
-          <p class="hero-tagline">
-            AI時代下，學習是享受快樂的最佳模式。<br>
-            我們以「慢活」為語言，搭建個人與社會的橋梁，<br>
-            讓素養教育成為每個人內在成長的底蘊。
-          </p>
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-left">
+        {home.eyebrow && <p class="hero-year">{home.eyebrow}</p>}
+        <h1 class="hero-title">
+          {home.headlineBefore}<em>{home.headlineAccent}</em><br />{home.headlineAfter}
+        </h1>
+        {home.subheadEn && <p class="hero-en">{home.subheadEn}</p>}
+        {home.lead && (
+          <p class="hero-tagline" style="white-space:pre-line">{home.lead}</p>
+        )}
+        {home.heroTags && home.heroTags.length > 0 && (
           <div class="hero-pills">
-            <span class="pill">身心健康</span>
-            <span class="pill">藝術陪伴</span>
-            <span class="pill">生態永續</span>
+            {home.heroTags.map((t) => <span class="pill">{t}</span>)}
           </div>
-          <div class="hero-cta">
-            <a class="btn-primary" href="/column">閱讀慢活專欄</a>
-            <button class="btn-text">了解學會 →</button>
-          </div>
-        </div>
-        <div class="hero-right">
-          <div class="hero-visual"></div>
-          <div style="position:absolute;inset:0">
-            <div class="circle c1"></div><div class="circle c2"></div><div class="circle c3"></div>
-          </div>
-          <div class="hero-kanji">慢</div>
+        )}
+        <div class="hero-cta">
+          <a class="btn-primary" href="/column">閱讀慢活專欄</a>
+          <a class="btn-text" href="#about-sec">了解學會 →</a>
         </div>
       </div>
-
-
-
-      <!-- ABOUT -->
-      <section class="sec" id="about-sec" style="background:var(--cream)">
-        <div class="about-grid">
-          <div>
-            <p class="sec-label">About Us</p>
-            <h2 class="sec-title">關於學會</h2>
-            <div class="about-deco">慢活</div>
-          </div>
-          <div class="about-text">
-            <p>在追求物質高速發展的現代社會，人們常以外在成就評斷自我價值，忽略內在精神的認識與滋養，造成身心失衡與社會對立。<strong>AI時代的來臨更讓許多人對生命意義感到迷茫</strong>——我們相信，「學習」正是享受快樂、找回意義的最佳方式。</p>
-            <p>學會以推廣「慢活教育」為核心目標，透過「身心健康、藝術陪伴、生態永續」三大共學主題，開發個人的覺察能力，連結群體的創造力，營造互助共好的生活文化。</p>
-            <p>我們鼓勵每個人進入<strong>學習型狀態</strong>，以親身示範學習的喜悅——不為標準、不為證照，而是為了體驗成長帶來的滿足感，讓「慢活」成為臺灣素養教育的底蘊，與參與國際社群的暖實力。</p>
-          </div>
+      <div class="hero-right">
+        <div class="hero-visual"></div>
+        <div style="position:absolute;inset:0">
+          <div class="circle c1"></div><div class="circle c2"></div><div class="circle c3"></div>
         </div>
-      </section>
+        <div class="hero-kanji">慢</div>
+      </div>
+    </div>
 
-      <!-- EVENTS 活動資訊 -->
-      <section class="sec" id="events-sec" style="background:var(--warm-white);padding-bottom:0">
-        <p class="sec-label">Events</p>
-        <h2 class="sec-title">活動資訊</h2>
+    <!-- ABOUT -->
+    <section class="sec" id="about-sec" style="background:var(--cream)">
+      <div class="about-grid">
+        <div>
+          {home.aboutLabel && <p class="sec-label">{home.aboutLabel}</p>}
+          <h2 class="sec-title">{home.aboutTitle}</h2>
+          <div class="about-deco">慢活</div>
+        </div>
+        <div class="about-text">
+          <PortableText value={home.aboutBody} />
+        </div>
+      </div>
+    </section>
 
-        <!-- 跑馬燈 -->
+    <!-- EVENTS -->
+    <section class="sec" id="events-sec" style="background:var(--warm-white);padding-bottom:0">
+      {home.eventsLabel && <p class="sec-label">{home.eventsLabel}</p>}
+      <h2 class="sec-title">{home.eventsTitle}</h2>
+
+      {marqueeItems.length > 0 && (
         <div style="background:var(--sage);overflow:hidden;margin-bottom:3rem;padding:0.65rem 0">
           <div class="marquee-track">
             <span class="marquee-text">
-              ✦ 2026.06.28 苗栗青年藝術論壇 &nbsp;&nbsp;&nbsp; ✦ 慢旅共學首站・嘉義（籌備中）&nbsp;&nbsp;&nbsp; ✦ 每月線上共學講座・持續開放報名 &nbsp;&nbsp;&nbsp; ✦ 慢活文字專欄・每月一味・歡迎投稿 &nbsp;&nbsp;&nbsp; ✦ 2026.06.28 苗栗青年藝術論壇 &nbsp;&nbsp;&nbsp; ✦ 慢旅共學首站・嘉義（籌備中）&nbsp;&nbsp;&nbsp; ✦ 每月線上共學講座・持續開放報名 &nbsp;&nbsp;&nbsp; ✦ 慢活文字專欄・每月一味・歡迎投稿 &nbsp;&nbsp;&nbsp;
+              {/* 重複兩輪，讓跑馬燈接得上 */}
+              {[...marqueeItems, ...marqueeItems].map((t) => (
+                <span style="margin-right:2.5rem">✦ {t}</span>
+              ))}
             </span>
           </div>
         </div>
+      )}
 
-        <!-- 活動卡片 -->
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin:0 -5rem">
-          <div class="event-card">
-            <div class="event-photo" style="background:linear-gradient(135deg,#c8d4bc,#a8b89a)">
-              <div class="event-photo-inner">🎭</div>
+      {cards.length > 0 && (
+        <div style={`display:grid;grid-template-columns:repeat(${Math.min(cards.length, 3)},1fr);gap:2px;margin:0 -5rem`}>
+          {cards.map((e, i) => (
+            <div class="event-card">
+              <div class="event-photo" style={`background:${GRADIENTS[i % GRADIENTS.length]}`}>
+                <div class="event-photo-inner">{e.icon}</div>
+              </div>
+              <div class="event-body">
+                <div class="event-date">{e.dateLabel}</div>
+                <div class="event-title">{e.title}</div>
+                {e.description && <p class="event-desc">{e.description}</p>}
+                {e.tag && <span class="event-tag">{e.tag}</span>}
+              </div>
             </div>
-            <div class="event-body">
-              <div class="event-date">2026 · 06 · 28</div>
-              <div class="event-title">苗栗青年藝術論壇</div>
-              <p class="event-desc">支持青年藝術家阿里，結合行為藝術與論壇形式，在苗栗舉辦一場關於藝術與生命的對話。</p>
-              <span class="event-tag">藝術陪伴</span>
-            </div>
-          </div>
-          <div class="event-card">
-            <div class="event-photo" style="background:linear-gradient(135deg,#d4c4a8,#c8a878)">
-              <div class="event-photo-inner">🚂</div>
-            </div>
-            <div class="event-body">
-              <div class="event-date">2026 · Q3（籌備中）</div>
-              <div class="event-title">慢旅共學・嘉義首站</div>
-              <p class="event-desc">以旅行作為學習方式，走入嘉義的生態、文化與人情，體驗「慢活」最真實的樣子。</p>
-              <span class="event-tag">慢旅共學</span>
-            </div>
-          </div>
-          <div class="event-card">
-            <div class="event-photo" style="background:linear-gradient(135deg,#b8ccd8,#8aaac0)">
-              <div class="event-photo-inner">🎙️</div>
-            </div>
-            <div class="event-body">
-              <div class="event-date">每月定期</div>
-              <div class="event-title">線上共學講座</div>
-              <p class="event-desc">40分鐘線上講座，由會員輪流分享慢活實踐主題，錄影上傳YouTube，隨時可回顧。</p>
-              <span class="event-tag">共學活動</span>
-            </div>
-          </div>
+          ))}
         </div>
-      </section>
+      )}
+    </section>
   </div>
 </Base>

@@ -1,62 +1,82 @@
 ---
-import Base from '../layouts/Base.astro';
+import Base from '../layouts/Base.astro'
+import { fetchOne, Q } from '../lib/sanity'
+
+type Use = { icon?: string; title: string; description?: string }
+type Page = {
+  label?: string
+  title: string
+  intro?: string
+  uses?: Use[]
+  accountName?: string
+  bankName?: string
+  accountNo?: string
+  receiptNote?: string
+  notes?: string[]
+}
+
+const page = await fetchOne<Page>(Q.donate, {}, '捐款支持頁面')
 ---
-<Base title="捐款支持"
-      description="支持臺灣慢活教育學會推動慢活教育、藝術陪伴與青年藝術家獎助計畫。歡迎來信洽詢支持方式。">
+<Base
+  title={page.title}
+  description="支持臺灣慢活教育學會推動慢活教育、藝術陪伴與青年藝術家獎助計畫。歡迎來信洽詢支持方式。"
+>
   <div class="page" id="page-donate">
-      <div class="page-banner" style="background:var(--cream);padding:5rem 5rem 3rem">
-        <p class="sec-label">Support Us</p>
-        <h2 class="sec-title">捐款支持</h2>
-        <p style="font-size:0.88rem;line-height:2.3;color:var(--muted);max-width:620px">您的支持是學會持續前行的動力。每一份捐款都將用於推動慢活教育、支持青年藝術家、走入社區與偏鄉，讓更多人有機會體驗學習的喜悅。</p>
-      </div>
-      <section class="sec" style="background:var(--warm-white);padding-top:3rem">
-        <div class="donate-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;max-width:900px">
-          <div>
-            <p class="sec-label">Why Donate</p>
-            <h3 style="font-size:1.2rem;font-weight:300;letter-spacing:0.1em;color:var(--charcoal);margin-bottom:1.5rem">您的捐款用於</h3>
-            <div class="plan-items">
+    <div class="page-banner" style="background:var(--cream);padding:5rem 5rem 3rem">
+      {page.label && <p class="sec-label">{page.label}</p>}
+      <h2 class="sec-title">{page.title}</h2>
+      {page.intro && (
+        <p style="font-size:0.88rem;line-height:2.3;color:var(--muted);max-width:620px">{page.intro}</p>
+      )}
+    </div>
+
+    <section class="sec" style="background:var(--warm-white);padding-top:3rem">
+      <div class="donate-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;max-width:900px">
+        <div>
+          <p class="sec-label">Why Donate</p>
+          <h3 style="font-size:1.2rem;font-weight:300;letter-spacing:0.1em;color:var(--charcoal);margin-bottom:1.5rem">您的捐款用於</h3>
+          <div class="plan-items">
+            {(page.uses ?? []).map((u) => (
               <div class="plan-item">
-                <div class="plan-item-title">🌿 慢活教育推廣</div>
-                <div class="plan-item-desc">辦理線上共學講座、社區體驗活動與校園SEL課程。</div>
+                <div class="plan-item-title">{u.icon ? `${u.icon} ` : ''}{u.title}</div>
+                {u.description && <div class="plan-item-desc">{u.description}</div>}
               </div>
-              <div class="plan-item">
-                <div class="plan-item-title">🎭 青年藝術家獎助</div>
-                <div class="plan-item-desc">支持有行動力的青年創作者，讓藝術走進生活各角落。</div>
-              </div>
-              <div class="plan-item">
-                <div class="plan-item-title">🚂 慢旅共學計畫</div>
-                <div class="plan-item-desc">帶領會員深入台灣各地，以旅行作為學習與連結的方式。</div>
-              </div>
-              <div class="plan-item">
-                <div class="plan-item-title">❤️ 心靈偏鄉陪伴</div>
-                <div class="plan-item-desc">走入資源不足的社區，陪伴需要關懷的民眾。</div>
-              </div>
-            </div>
-          </div>
-          <div>
-            <p class="sec-label">Donate</p>
-            <h3 style="font-size:1.2rem;font-weight:300;letter-spacing:0.1em;color:var(--charcoal);margin-bottom:1.5rem">捐款方式</h3>
-            <div style="background:var(--cream);padding:2.5rem;border:1px solid var(--border)">
-              <div style="font-size:0.78rem;letter-spacing:0.18em;color:var(--muted);margin-bottom:0.5rem">銀行匯款</div>
-              <div style="font-size:0.88rem;color:var(--charcoal);line-height:2.2;margin-bottom:2rem">
-                戶名：臺灣慢活教育學會<br>
-                銀行：待立案後公告<br>
-                帳號：待立案後公告
-              </div>
-              <div style="font-size:0.78rem;letter-spacing:0.18em;color:var(--muted);margin-bottom:0.5rem">捐款收據</div>
-              <div style="font-size:0.84rem;color:var(--muted);line-height:2">
-                學會立案取得統一編號後，<br>即可開立正式捐款收據。
-              </div>
-            </div>
-            <div style="margin-top:1.5rem;padding:1.5rem;background:var(--sage-pale);border-left:3px solid var(--sage)">
-              <div style="font-size:0.8rem;line-height:2;color:var(--sage)">
-                ✦ 匯款後請來信告知姓名與金額<br>
-                ✦ 捐款資訊將於立案後正式公告<br>
-                ✦ 感謝您與我們一起慢活共好
-              </div>
-            </div>
+            ))}
           </div>
         </div>
-      </section>
+
+        <div>
+          <p class="sec-label">Donate</p>
+          <h3 style="font-size:1.2rem;font-weight:300;letter-spacing:0.1em;color:var(--charcoal);margin-bottom:1.5rem">捐款方式</h3>
+          <div style="background:var(--cream);padding:2.5rem;border:1px solid var(--border)">
+            <div style="font-size:0.78rem;letter-spacing:0.18em;color:var(--muted);margin-bottom:0.5rem">銀行匯款</div>
+            <div style="font-size:0.88rem;color:var(--charcoal);line-height:2.2;margin-bottom:2rem">
+              戶名：{page.accountName}<br />
+              銀行：{page.bankName}<br />
+              帳號：{page.accountNo}
+            </div>
+            {page.receiptNote && (
+              <>
+                <div style="font-size:0.78rem;letter-spacing:0.18em;color:var(--muted);margin-bottom:0.5rem">捐款收據</div>
+                <div style="font-size:0.84rem;color:var(--muted);line-height:2">{page.receiptNote}</div>
+              </>
+            )}
+          </div>
+
+          {page.notes && page.notes.length > 0 && (
+            <div style="margin-top:1.5rem;padding:1.5rem;background:var(--sage-pale);border-left:3px solid var(--sage)">
+              <div style="font-size:0.8rem;line-height:2;color:var(--sage)">
+                {page.notes.map((n, i) => (
+                  <>
+                    ✦ {n}
+                    {i < page.notes!.length - 1 && <br />}
+                  </>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
   </div>
 </Base>

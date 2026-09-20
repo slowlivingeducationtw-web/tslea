@@ -1,37 +1,59 @@
 ---
-import Base from '../layouts/Base.astro';
+import Base from '../layouts/Base.astro'
+import { fetchOne, Q } from '../lib/sanity'
+
+type Card = { icon?: string; title: string; body?: string; link?: { title: string; url: string } }
+type Page = {
+  label?: string
+  title: string
+  subtitle?: string
+  cards?: Card[]
+  notes?: string[]
+}
+
+const page = await fetchOne<Page>(Q.contact, {}, '聯絡我們頁面')
 ---
-<Base title="聯絡我們"
-      description="聯絡臺灣慢活教育學會：入會諮詢、慢活專欄投稿、合作與贊助提案，歡迎來信與我們聯繫。">
+<Base
+  title={page.title}
+  description="聯絡臺灣慢活教育學會：入會諮詢、慢活專欄投稿、合作與贊助提案，歡迎來信與我們聯繫。"
+>
   <div class="page" id="page-contact">
-      <section class="sec contact-sec">
-        <p class="sec-label">Contact</p>
-        <div class="contact-title">聯絡我們</div>
-        <p class="contact-sub">慢活，從一個真誠的連結開始</p>
-        <div class="contact-cards">
+    <section class="sec contact-sec">
+      {page.label && <p class="sec-label">{page.label}</p>}
+      <div class="contact-title">{page.title}</div>
+      {page.subtitle && <p class="contact-sub">{page.subtitle}</p>}
+
+      <div class="contact-cards">
+        {(page.cards ?? []).map((c) => (
           <div class="contact-card">
-            <div class="contact-card-icon">📧</div>
-            <div class="contact-card-label">電子信箱</div>
-            <div class="contact-card-value" style="font-size:0.78rem;word-break:break-all"><a href="mailto:slowlivingeducation@gmail.com" style="color:var(--sage);text-decoration:none">slowlivingeducation@gmail.com</a></div>
+            {c.icon && <div class="contact-card-icon">{c.icon}</div>}
+            <div class="contact-card-label">{c.title}</div>
+            <div
+              class="contact-card-value"
+              style={c.body && c.body.length > 16 ? 'font-size:0.78rem;word-break:break-all' : 'font-size:0.85rem;line-height:1.7'}
+            >
+              {c.link?.url ? (
+                <a href={c.link.url} style="color:var(--sage);text-decoration:none">{c.body}</a>
+              ) : (
+                c.body
+              )}
+            </div>
           </div>
-          <div class="contact-card">
-            <div class="contact-card-icon">📍</div>
-            <div class="contact-card-label">學會地址</div>
-            <div class="contact-card-value" style="font-size:0.8rem;line-height:1.7">苗栗縣苗栗市<br>建台街一巷13號</div>
-          </div>
-          <div class="contact-card">
-            <div class="contact-card-icon">📅</div>
-            <div class="contact-card-label">成立年份</div>
-            <div class="contact-card-value">2026年10月</div>
-          </div>
-        </div>
+        ))}
+      </div>
+
+      {page.notes && page.notes.length > 0 && (
         <div style="margin-top:3rem;padding:2rem;background:white;border:1px solid var(--border);max-width:500px;margin-left:auto;margin-right:auto">
           <p style="font-size:0.78rem;letter-spacing:0.15em;color:var(--muted);line-height:2">
-            ✦ 對學會有興趣？歡迎來信了解入會資訊<br>
-            ✦ 想投稿慢活專欄？歡迎與我們分享您的故事<br>
-            ✦ 想合作或贊助？期待與理念相近的夥伴攜手
+            {page.notes.map((n, i) => (
+              <>
+                ✦ {n}
+                {i < page.notes!.length - 1 && <br />}
+              </>
+            ))}
           </p>
         </div>
-      </section>
+      )}
+    </section>
   </div>
 </Base>

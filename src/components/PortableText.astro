@@ -1,0 +1,56 @@
+---
+import { toHTML } from '@portabletext/to-html'
+import { imageUrl, imageDims } from '../lib/sanity'
+
+const { value, class: className = '' } = Astro.props
+
+const esc = (s: string) =>
+  String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
+function figureHtml(v: any, inRow = false) {
+  const src = imageUrl(v.image, inRow ? 700 : 1200)
+  if (!src) return ''
+  const d = imageDims(v.image)
+  const dim = d ? ` width="${d.width}" height="${d.height}"` : ''
+  const img = `<img src="${esc(src)}" alt="${esc(v.alt || '')}" loading="lazy" decoding="async"${dim}>`
+  if (inRow) return img
+  return `<figure class="pt-figure">${img}${
+    v.caption ? `<figcaption class="pt-caption">${esc(v.caption)}</figcaption>` : ''
+  }</figure>`
+}
+
+const html = value
+  ? toHTML(value, {
+      components: {
+        block: {
+          // 「註解小字」是搬家時發現的需求：原文有灰色小字的補充說明
+          note: ({ children }) => `<p class="pt-note">${children}</p>`,
+          normal: ({ children }) => `<p>${children}</p>`,
+          h3: ({ children }) => `<h3>${children}</h3>`,
+          h4: ({ children }) => `<h4>${children}</h4>`,
+          blockquote: ({ children }) => `<blockquote>${children}</blockquote>`,
+        },
+        marks: {
+          highlight: ({ children }) => `<mark>${children}</mark>`,
+          link: ({ children, value: v }) => {
+            const href = esc(v?.href || '')
+            const ext = /^https?:\/\//.test(href)
+            return `<a href="${href}"${ext ? ' target="_blank" rel="noopener"' : ''}>${children}</a>`
+          },
+        },
+        types: {
+          verse: ({ value: v }) => `<div class="pt-verse">${esc(v.text)}</div>`,
+          figure: ({ value: v }) => figureHtml(v),
+          imageRow: ({ value: v }) => {
+            const imgs = (v.images || []).map((i: any) => figureHtml(i, true)).join('')
+            return `<div><div class="pt-row">${imgs}</div>${
+              v.caption ? `<p class="pt-caption">${esc(v.caption)}</p>` : ''
+            }</div>`
+          },
+        },
+      },
+      onMissingComponent: false,
+    })
+  : ''
+---
+<div class={`pt ${className}`.trim()} set:html={html} />

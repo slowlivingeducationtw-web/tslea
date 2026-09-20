@@ -1,0 +1,106 @@
+---
+import Base from '../../layouts/Base.astro'
+import PortableText from '../../components/PortableText.astro'
+import { sanity, Q, imageUrl, imageDims } from '../../lib/sanity'
+
+export async function getStaticPaths() {
+  const slugs = await sanity.fetch<string[]>(Q.articleSlugs)
+  return slugs.map((slug) => ({ params: { slug } }))
+}
+
+const CAT_LABEL: Record<string, string> = {
+  health: '身心健康', art: '藝術陪伴', eco: '生態永續', travel: '慢旅共學', other: '其他',
+}
+
+const { slug } = Astro.params
+const a = await sanity.fetch(Q.article, { slug })
+if (!a) throw new Error(`Sanity 找不到 slug 為 "${slug}" 的文章`)
+
+const site = 'https://slowlivingeducation.org'
+const cover = imageUrl(a.cover?.image, 1200)
+const coverDims = imageDims(a.cover?.image)
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: a.title,
+  description: a.excerpt,
+  datePublished: a.publishedAt,
+  image: cover,
+  author: { '@type': 'Person', name: a.author?.name },
+  publisher: {
+    '@type': 'Organization',
+    name: '臺灣慢活教育學會',
+    logo: { '@type': 'ImageObject', url: `${site}/images/logo.png` },
+  },
+  inLanguage: 'zh-Hant-TW',
+  isPartOf: { '@type': 'Blog', name: '慢活專欄', url: `${site}/column` },
+  mainEntityOfPage: { '@type': 'WebPage', '@id': `${site}/column/${a.slug}` },
+  keywords: (a.tags || []).join('、'),
+}
+---
+<Base
+  title={a.title}
+  description={a.excerpt}
+  ogImage={cover ? cover.replace(site, '') : undefined}
+  jsonLd={jsonLd}
+>
+  <div class="page" id="page-article" data-cat={a.category}>
+    <div class="article-page-bar">
+      <a class="article-back-btn" href="/column">
+        <span class="article-back-arrow">←</span> 返回專欄
+      </a>
+    </div>
+
+    <article class="article-page-content">
+      <div class="article-card-tags">
+        <div style="display:flex;gap:0.6rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+          <span class={`article-cat cat-${a.category}`}>{CAT_LABEL[a.category] ?? '其他'}</span>
+          {a.series && (
+            <span style={`font-size:0.68rem;letter-spacing:0.18em;color:var(--${a.accent});padding:0.2rem 0.7rem;border:1px solid var(--${a.accent}-light)`}>{a.series}</span>
+          )}
+        </div>
+      </div>
+
+      <h1 class="article-title" style="font-size:1.15rem">{a.title}</h1>
+
+      {cover && (
+        <div class="article-image">
+          <img src={cover} alt={a.cover?.alt || a.title} loading="eager" decoding="async"
+               width={coverDims?.width} height={coverDims?.height}
+               style="width:100%;height:auto;display:block;border:1px solid var(--border)" />
+        </div>
+      )}
+
+      <div style="width:100%;height:1px;background:var(--border);margin:1.5rem 0"></div>
+
+      <PortableText value={a.body} />
+
+      {a.links && a.links.length > 0 && (
+        <div style="margin-top:1.5rem;padding-top:1.2rem;border-top:1px solid var(--border)">
+          {a.links.map((l: any) => (
+            <a href={l.url} target="_blank" rel="noopener"
+               style={`display:inline-block;margin-right:1.2rem;font-size:0.75rem;color:var(--${a.accent});letter-spacing:0.12em;text-decoration:none;border-bottom:1px solid var(--${a.accent}-light);padding-bottom:1px`}>{l.title} →</a>
+          ))}
+        </div>
+      )}
+
+      <div class="article-meta">
+        {a.author && (
+          <span class="article-author">
+            <span class="author-avatar" style={`background:var(--${a.author.accent || a.accent})`}>
+              {a.author.initial || a.author.name.slice(0, 1)}
+            </span>
+            {a.author.name}{a.author.title ? `・${a.author.title}` : ''}
+          </span>
+        )}
+        <span class="article-date">{a.publishedAt?.slice(0, 7).replace('-', '.')}</span>
+        {a.tags && a.tags.length > 0 && (
+          <div class="article-tags">
+            {a.tags.map((t: string) => <span class="tag">{t}</span>)}
+          </div>
+        )}
+      </div>
+    </article>
+  </div>
+</Base>

@@ -732,3 +732,34 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   *, *::before, *::after { animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
   .sec { opacity:1 !important; transform:none !important; }
 }
+
+/* ── 後台富文本內容（.pt）── */
+/* 樣式沿用原本寫死在文章裡的 inline style，改版前後視覺一致。 */
+.pt { font-size:0.86rem; line-height:2.4; color:var(--charcoal); letter-spacing:0.05em; }
+.pt > p { margin-bottom:1rem; }
+.pt > p:last-child { margin-bottom:0; }
+.pt h3 { font-size:1rem; font-weight:600; letter-spacing:0.1em; margin:2rem 0 0.8rem; }
+.pt h4 { font-size:0.9rem; font-weight:600; letter-spacing:0.1em; margin:1.6rem 0 0.6rem; }
+.pt blockquote {
+  margin:1.5rem 0; padding:0.2rem 0 0.2rem 1.2rem;
+  border-left:2px solid var(--sage-light); color:var(--muted);
+}
+.pt .pt-note { font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem; line-height:2.2; }
+.pt ul, .pt ol { margin:0 0 1rem 1.4rem; }
+.pt li { margin-bottom:0.4rem; }
+.pt a { color:var(--earth); border-bottom:1px solid var(--earth-light); text-decoration:none; }
+.pt a:hover { color:var(--charcoal); }
+.pt mark { background:none; color:var(--sage); font-weight:600; }
+
+/* 詩體段落：保留作者輸入的每一個換行 */
+.pt-verse { white-space:pre-line; line-height:2.8; margin-bottom:1rem; }
+
+/* 內文插圖 */
+.pt-figure { margin:1.5rem 0; }
+.pt-figure img { width:100%; height:auto; display:block; border:1px solid var(--border); }
+.pt-caption { font-size:0.72rem; color:var(--muted); margin-top:0.5rem; letter-spacing:0.08em; }
+
+/* 並排圖片 */
+.pt-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:1.5rem; }
+.pt-row img { width:100%; height:auto; display:block; border:1px solid var(--border); }
+@media (max-width:680px) { .pt-row { grid-template-columns:1fr; gap:12px; } }
