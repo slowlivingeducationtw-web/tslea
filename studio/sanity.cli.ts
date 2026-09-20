@@ -7,4 +7,7 @@ export default defineCliConfig({
   },
   // 後台部署到 https://tslea.sanity.studio（Sanity 免費託管）
   studioHost: 'tslea',
+  deployment: {
+    appId: 'wd7ruy3koicfdjm7frj6vvbn',
+  },
 })
