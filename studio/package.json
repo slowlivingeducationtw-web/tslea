@@ -1,0 +1,20 @@
+{
+  "name": "tslea-studio",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "sanity dev",
+    "build": "sanity build",
+    "deploy": "sanity deploy",
+    "export": "sanity dataset export production"
+  },
+  "dependencies": {
+    "@sanity/locale-zh-hant": "^2.2.39",
+    "@sanity/vision": "^6.15.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "sanity": "^6.15.0",
+    "styled-components": "^6.5.3"
+  }
+}
