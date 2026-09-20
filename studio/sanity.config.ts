@@ -5,10 +5,16 @@ import { zhHantLocale } from '@sanity/locale-zh-hant'
 
 import { schemaTypes, SINGLETONS } from './schemaTypes'
 import { structure } from './structure'
+import { theme } from './theme'
+import { Logo } from './components/Logo'
 
 export default defineConfig({
   name: 'tslea',
   title: '臺灣慢活教育學會',
+  icon: Logo,
+
+  // 後台配色沿用網站的色票（沙綠／大地／奶油），見 theme.ts
+  theme,
 
   projectId: '2lbk0ta8',
   dataset: 'production',
