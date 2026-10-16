@@ -1,0 +1,72 @@
+---
+import Base from '../layouts/Base.astro'
+import { mailto } from '../data/site'
+
+// 學會尚未建立線上入會表單或志工報名表。
+// 目前兩個入口都以「預先填好主旨的 Email」聯絡學會；表單完成後，把 href 換成表單網址即可。
+const OPTIONS = [
+  {
+    id: 'member',
+    icon: '🌱',
+    title: '加入會員',
+    text: '認同慢活教育理念，想一起參與共學、會員大會與學會發展的朋友，歡迎來信了解入會資格與流程。',
+    cta: '來信詢問入會',
+    href: mailto('入會詢問'),
+    pending: '線上入會申請表 待補',
+  },
+  {
+    id: 'volunteer',
+    icon: '🤝',
+    title: '成為志工',
+    text: '願意在活動現場、文書或社群經營上出一份力，請來信告訴我們你的專長與可參與的時間。',
+    cta: '來信報名志工',
+    href: mailto('志工報名'),
+    pending: '志工報名表 待補',
+  },
+]
+---
+<Base
+  title="加入我們"
+  description="加入臺灣慢活教育學會：成為會員或擔任志工，一起推廣慢活教育。"
+>
+  <div class="page" id="page-join">
+    <header class="page-head">
+      <div class="container">
+        <p class="crumbs"><a href="/">首頁</a> / 加入我們</p>
+        <h1>一起加入我們</h1>
+        <p class="lead">如果你也嚮往一種更從容、更有連結的生活與學習方式，歡迎用你適合的方式參與學會。</p>
+      </div>
+    </header>
+
+    <section class="block">
+      <div class="container">
+        <ul class="join-list">
+          {OPTIONS.map((o) => (
+            <li class="card join-card" id={o.id}>
+              <div class="card-body">
+                <span class="join-icon" aria-hidden="true">{o.icon}</span>
+                <h2 class="card-title">{o.title}</h2>
+                <p class="card-text">{o.text}</p>
+                <div class="card-foot">
+                  <a class="btn btn-solid btn-sm" href={o.href}>{o.cta}</a>
+                  <span class="join-pending">{o.pending}</span>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <p class="join-more">企業、學校合作或課程演講邀約，請見<a class="text-link" href="/partner">與我們合作</a>；其他問題歡迎<a class="text-link" href="/contact">聯絡我們</a>。</p>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .join-list { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.25rem, 2vw, 2rem); }
+  @media (max-width: 720px) { .join-list { grid-template-columns: minmax(0, 1fr); } }
+  .join-card { scroll-margin-top: calc(var(--header-h) + 1.5rem); }
+  .join-card:target { outline: 3px solid var(--forest); outline-offset: 3px; }
+  .join-icon { font-size: 2rem; }
+  .join-pending { font-size: 0.78rem; color: var(--ink-soft); letter-spacing: 0.05em; }
+  .join-more { margin-top: 2.5rem; font-size: 0.98rem; color: var(--ink-soft); line-height: 2; }
+</style>

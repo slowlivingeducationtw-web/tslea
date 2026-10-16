@@ -1,131 +1,243 @@
 ---
 import Base from '../layouts/Base.astro'
 import PortableText from '../components/PortableText.astro'
+import Photo from '../components/Photo.astro'
+import HeroCarousel, { type HeroSlide } from '../components/HeroCarousel.astro'
+import EventCard from '../components/EventCard.astro'
+import FormatList from '../components/FormatList.astro'
 import { sanity, fetchOne, Q } from '../lib/sanity'
+import { THEMES } from '../data/themes'
+import { getEvents } from '../lib/events'
 
-type Home = {
-  eyebrow?: string
-  headlineBefore?: string
-  headlineAccent?: string
-  headlineAfter?: string
-  subheadEn?: string
-  lead?: string
-  heroTags?: string[]
-  aboutLabel?: string
-  aboutTitle?: string
-  aboutBody?: any
-  eventsLabel?: string
-  eventsTitle?: string
-}
-type Event = {
-  title: string
-  dateLabel: string
-  icon?: string
-  description?: string
-  tag?: string
-  showInMarquee?: boolean
-  showAsCard?: boolean
-}
+// 版面參考 TFT（teach4taiwan.org）的敘事方式：
+// 置中主視覺 → 一句主張＋說明（認識學會）→ 編號敘事「我們怎麼一起學」→ 近期活動
+// → 大圖入口 → 滿版行動呼籲。
 
+type Home = { aboutBody?: any[] }
 const home = await fetchOne<Home>(Q.home, {}, '首頁文案')
-const events = await sanity.fetch<Event[]>(Q.events)
 
-const marquee = events.filter((e) => e.showInMarquee !== false)
-const cards = events.filter((e) => e.showAsCard !== false)
+// 主題的較長說明來自後台「三大共學主題」，在後台修改即可；找不到時退回短介紹
+const themesDoc = await sanity.fetch<{ themes?: { title: string; description?: string }[] }>(Q.themes)
+const themeText = (title: string, fallback: string) =>
+  themesDoc?.themes?.find((x) => x.title === title)?.description ?? fallback
 
-// 卡片色塊循環，維持原本三張卡片的配色變化
-const GRADIENTS = [
-  'linear-gradient(135deg,#c8d4bc,#a8b89a)',
-  'linear-gradient(135deg,#d4c4a8,#c8a878)',
-  'linear-gradient(135deg,#b8ccd8,#8aaac0)',
+// 「近期活動」是 /events 清單裡「即將舉行／持續進行」的前三筆，不另外維護一份
+const events = (await getEvents()).current.slice(0, 3)
+
+// 「認識學會」右欄沿用後台「首頁文案 → 關於學會」的內文前兩段，完整內容在 /about
+const aboutIntro = (home.aboutBody ?? []).filter((b) => b._type === 'block').slice(0, 2)
+
+// 照片：取得後放到 public/images/ 並填入路徑，null 會顯示「照片待補」色塊
+// 主視覺輪播：文字只用學會既有的說法（第 2 頁取自學會 Facebook 粉專簡介）
+const HERO_SLIDES: HeroSlide[] = [
+  {
+    pre: '慢下來，',
+    title: '讓學習與生活<br>重新連結',
+    sub: '教育不只是知識的傳遞，更是讓人與自己、他人、自然重新連結的旅程。',
+    tone: 'forest',
+    image: null,
+    imageAlt: '人物在自然中共學',
+  },
+  {
+    title: '<span class="nw">「慢活」是實踐終身學習、</span><span class="nw">互助共好、</span><span class="nw">智慧傳承的生活文化</span>',
+    size: 'md',
+    sub: '讓我們一起慢慢呼吸，慢慢學習，很好。',
+    tone: 'mist',
+    image: null,
+    imageAlt: '學會夥伴一起學習交流',
+  },
+  {
+    pre: '三大共學主題',
+    title: '<span class="nw">身心健康・</span><span class="nw">藝術陪伴・</span><span class="nw">生態永續</span>',
+    size: 'md',
+    sub: '從身心到自然，探索更豐富的生活可能。',
+    tone: 'leaf',
+    image: null,
+    imageAlt: '戶外自然體驗',
+  },
 ]
+const THEME_IMAGES: Record<string, string | null> = { health: null, art: null, eco: null }
 
-const marqueeItems = marquee.map((e) => `${e.dateLabel} ${e.title}`)
+const TILES = [
+  { href: '/column', title: '慢活專欄', text: '會員執筆的慢活故事', tone: 'forest', image: null as string | null },
+  { href: '/about', title: '認識學會', text: '理念、理監事與年度計畫', tone: 'slate', image: null as string | null },
+  { href: '/partner', title: '與我們合作', text: '企業、學校與課程演講邀約', tone: 'clay', image: null as string | null },
+  { href: '/contact', title: '聯絡我們', text: '入會、投稿或任何想法', tone: 'olive', image: null as string | null },
+]
 ---
 <Base
-  title="臺灣慢活教育學會｜慢下來，才看得見生活"
-  description="臺灣慢活教育學會以身心健康、藝術陪伴、生態永續三大共學主題，推廣慢活教育與終身學習。立案於苗栗，歡迎認同理念的朋友一起放慢腳步。"
+  title="臺灣慢活教育學會｜慢下來，讓學習與生活重新連結"
+  description="臺灣慢活教育學會以身心健康、藝術陪伴、生態永續三大共學主題，推廣慢活教育與終身學習。認識學會、探索共學方式與近期活動，一起放慢腳步。"
 >
   <div class="page" id="page-home">
-    <!-- HERO -->
-    <div class="hero">
-      <div class="hero-left">
-        {home.eyebrow && <p class="hero-year">{home.eyebrow}</p>}
-        <h1 class="hero-title">
-          {home.headlineBefore}<em>{home.headlineAccent}</em><br />{home.headlineAfter}
-        </h1>
-        {home.subheadEn && <p class="hero-en">{home.subheadEn}</p>}
-        {home.lead && (
-          <p class="hero-tagline" style="white-space:pre-line">{home.lead}</p>
-        )}
-        {home.heroTags && home.heroTags.length > 0 && (
-          <div class="hero-pills">
-            {home.heroTags.map((t) => <span class="pill">{t}</span>)}
-          </div>
-        )}
-        <div class="hero-cta">
-          <a class="btn-primary" href="/column">閱讀慢活專欄</a>
-          <a class="btn-text" href="#about-sec">了解學會 →</a>
-        </div>
-      </div>
-      <div class="hero-right">
-        <div class="hero-visual"></div>
-        <div style="position:absolute;inset:0">
-          <div class="circle c1"></div><div class="circle c2"></div><div class="circle c3"></div>
-        </div>
-        <div class="hero-kanji">慢</div>
-      </div>
-    </div>
+    <!-- 1. 主視覺：輪播，一頁一句話 -->
+    <HeroCarousel slides={HERO_SLIDES} />
 
-    <!-- ABOUT -->
-    <section class="sec" id="about-sec" style="background:var(--cream)">
-      <div class="about-grid">
+    <!-- 2. 認識學會：一句主張＋說明 -->
+    <section class="block statement" id="about" aria-labelledby="about-title">
+      <div class="container statement-grid">
         <div>
-          {home.aboutLabel && <p class="sec-label">{home.aboutLabel}</p>}
-          <h2 class="sec-title">{home.aboutTitle}</h2>
-          <div class="about-deco">慢活</div>
+          <h2 id="about-title" class="sr-only">認識學會</h2>
+          <p class="statement-line">
+            我們相信，<br><mark>學習</mark>是享受快樂、<br>找回意義的最佳方式。
+          </p>
         </div>
-        <div class="about-text">
-          <PortableText value={home.aboutBody} />
+        <div class="statement-body">
+          <PortableText value={aboutIntro} />
+          <a class="text-link" href="/about">更多關於學會 →</a>
         </div>
       </div>
     </section>
 
-    <!-- EVENTS -->
-    <section class="sec" id="events-sec" style="background:var(--warm-white);padding-bottom:0">
-      {home.eventsLabel && <p class="sec-label">{home.eventsLabel}</p>}
-      <h2 class="sec-title">{home.eventsTitle}</h2>
-
-      {marqueeItems.length > 0 && (
-        <div style="background:var(--sage);overflow:hidden;margin-bottom:3rem;padding:0.65rem 0">
-          <div class="marquee-track">
-            <span class="marquee-text">
-              {/* 重複兩輪，讓跑馬燈接得上 */}
-              {[...marqueeItems, ...marqueeItems].map((t) => (
-                <span style="margin-right:2.5rem">✦ {t}</span>
-              ))}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {cards.length > 0 && (
-        <div style={`display:grid;grid-template-columns:repeat(${Math.min(cards.length, 3)},1fr);gap:2px;margin:0 -5rem`}>
-          {cards.map((e, i) => (
-            <div class="event-card">
-              <div class="event-photo" style={`background:${GRADIENTS[i % GRADIENTS.length]}`}>
-                <div class="event-photo-inner">{e.icon}</div>
+    <!-- 3. 我們怎麼一起學：編號敘事 -->
+    <section class="block block-alt" id="learning" aria-labelledby="learning-title">
+      <div class="container">
+        <h2 id="learning-title" class="block-title center">我們怎麼一起學</h2>
+        <ol class="story">
+          {THEMES.map((t, i) => (
+            <li class={`story-row ${i % 2 ? 'flip' : ''}`}>
+              <div class="story-media">
+                <span class="story-num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                <Photo src={THEME_IMAGES[t.slug]} alt={`${t.title}共學情境照片`} tone={t.tone} icon={t.icon} class="story-photo" />
               </div>
-              <div class="event-body">
-                <div class="event-date">{e.dateLabel}</div>
-                <div class="event-title">{e.title}</div>
-                {e.description && <p class="event-desc">{e.description}</p>}
-                {e.tag && <span class="event-tag">{e.tag}</span>}
+              <div class="story-text">
+                <p class="story-en">{t.en}</p>
+                <h3 class="story-title">{t.title}</h3>
+                <p class="story-desc">{themeText(t.title, t.summary)}</p>
+                <a class="text-link" href={`/column?cat=${t.category}`}>閱讀{t.title}相關文章 →</a>
               </div>
-            </div>
+            </li>
           ))}
+        </ol>
+
+        <h3 class="formats-h" id="formats">共學形式</h3>
+        <FormatList />
+      </div>
+    </section>
+
+    <!-- 4. 近期活動 -->
+    <section class="block" id="events" aria-labelledby="events-title">
+      <div class="container">
+        <div class="block-head">
+          <div>
+            <h2 id="events-title" class="block-title">近期活動</h2>
+            <p class="block-sub">一起參與，創造更多美好的學習時光</p>
+          </div>
+          <a class="text-link" href="/events">查看所有活動 →</a>
         </div>
-      )}
+        <div class="grid-3">
+          {events.map((e) => <EventCard event={e} />)}
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. 大圖入口 -->
+    <section class="block block-alt" aria-labelledby="tiles-title">
+      <div class="container">
+        <h2 id="tiles-title" class="block-title center">探索更多</h2>
+        <ul class="tiles">
+          {TILES.map((t) => (
+            <li>
+              <a class={`tile tone-${t.tone}`} href={t.href}>
+                {t.image && <img src={t.image} alt="" loading="lazy" decoding="async" />}
+                <span class="tile-title">{t.title}</span>
+                <span class="tile-text">{t.text}</span>
+                <span class="tile-arrow" aria-hidden="true">→</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+
+    <!-- 6. 滿版行動呼籲 -->
+    <section class="cta-band" aria-labelledby="cta-title">
+      <div class="container cta-inner">
+        <div>
+          <h2 id="cta-title" class="cta-title">一起慢下來</h2>
+          <p class="cta-sub">願每個人都能在學習裡，找回與自己、他人與自然的連結。</p>
+        </div>
+        <div class="cta-actions">
+          <a class="btn btn-solid" href="/join">加入我們 →</a>
+          <a class="btn btn-outline" href="/donate">捐款支持 →</a>
+        </div>
+      </div>
     </section>
   </div>
 </Base>
+
+<style>
+  .center { text-align: center; }
+
+  /* 2. 一句主張＋說明 */
+  .statement-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: clamp(2rem, 6vw, 6rem); align-items: center; }
+  .statement-line { font-size: clamp(1.7rem, 3.4vw, 2.5rem); font-weight: 700; line-height: 1.6; letter-spacing: 0.06em; color: var(--ink); }
+  /* 仿 TFT 的手繪圈選：用底部色塊強調關鍵字 */
+  .statement-line mark {
+    background: linear-gradient(transparent 58%, var(--clay) 58%, var(--clay) 92%, transparent 92%);
+    color: inherit; padding: 0 0.1em;
+  }
+  .statement-body :global(.pt) { font-size: 1rem; line-height: 2.1; color: var(--ink-soft); margin-bottom: 1.4rem; }
+  @media (max-width: 860px) { .statement-grid { grid-template-columns: minmax(0, 1fr); } }
+
+  /* 3. 編號敘事 */
+  .story { list-style: none; display: grid; gap: clamp(3rem, 6vw, 5rem); margin-top: clamp(2.5rem, 5vw, 4rem); }
+  .story-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: clamp(2rem, 5vw, 5rem); align-items: center; }
+  .story-row.flip .story-media { order: 2; }
+  .story-media { position: relative; }
+  .story-media :global(.story-photo) { aspect-ratio: 4 / 3; border-radius: var(--radius); box-shadow: var(--shadow); }
+  .story-num {
+    position: absolute; z-index: 1; top: -0.55em; left: 0.3em;
+    font-size: clamp(3rem, 6vw, 4.5rem); font-weight: 700; line-height: 1; color: var(--forest);
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+  }
+  .story-row.flip .story-num { left: auto; right: 0.3em; }
+  .story-en { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.1rem; color: var(--ink-soft); letter-spacing: 0.08em; }
+  .story-title { font-size: clamp(1.4rem, 2.6vw, 1.8rem); font-weight: 700; color: var(--ink); letter-spacing: 0.1em; margin: 0.3rem 0 1rem; }
+  .story-desc { font-size: 1.02rem; line-height: 2.1; color: var(--ink-soft); margin-bottom: 1.2rem; max-width: 30em; }
+  .formats-h {
+    margin: clamp(4rem, 7vw, 6rem) 0 2rem; text-align: center;
+    font-size: clamp(1.3rem, 2.4vw, 1.6rem); font-weight: 700; color: var(--ink); letter-spacing: 0.12em;
+  }
+  @media (max-width: 760px) {
+    .story-row { grid-template-columns: minmax(0, 1fr); gap: 1.6rem; }
+    .story-row.flip .story-media { order: 0; }
+    .story-row.flip .story-num { right: auto; left: 0.3em; }
+  }
+
+  /* 5. 大圖入口 */
+  .tiles { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1rem, 2vw, 1.5rem); margin-top: 2.5rem; }
+  .tile {
+    position: relative; display: flex; flex-direction: column; justify-content: flex-start;
+    min-height: clamp(180px, 22vw, 280px); padding: clamp(1.4rem, 3vw, 2.2rem);
+    border-radius: var(--radius); overflow: hidden; color: #fff; text-decoration: none;
+    box-shadow: var(--shadow); transition: box-shadow 0.25s, transform 0.25s;
+  }
+  .tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; filter: brightness(0.7); }
+  .tile > span { position: relative; z-index: 1; }
+  .tile.tone-forest { background: linear-gradient(140deg, #4C7558, var(--forest)); }
+  .tile.tone-slate { background: linear-gradient(140deg, #6A8794, var(--slate)); }
+  .tile.tone-clay { background: linear-gradient(140deg, #A9774F, var(--clay-deep)); }
+  .tile.tone-olive { background: linear-gradient(140deg, #7A8752, var(--olive)); }
+  .tile:hover { box-shadow: var(--shadow-hover); transform: translateY(-3px); }
+  .tile:focus-visible { outline: 3px solid var(--forest); outline-offset: 4px; }
+  .tile-title { font-size: clamp(1.4rem, 2.6vw, 1.9rem); font-weight: 700; letter-spacing: 0.12em; }
+  .tile-text { margin-top: 0.5rem; font-size: 1rem; letter-spacing: 0.06em; opacity: 0.92; }
+  .tile-arrow {
+    position: absolute !important; right: clamp(1.2rem, 2.5vw, 1.8rem); bottom: clamp(1.2rem, 2.5vw, 1.8rem);
+    width: 52px; height: 52px; border-radius: 50%; background: #fff; color: var(--ink);
+    display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700;
+    transition: transform 0.25s;
+  }
+  .tile:hover .tile-arrow { transform: translateX(4px); }
+  @media (max-width: 640px) { .tiles { grid-template-columns: minmax(0, 1fr); } }
+
+  /* 6. 滿版行動呼籲 */
+  /* 用陶土暖色，和下方深綠頁尾分開 */
+  .cta-band { background: linear-gradient(120deg, var(--clay), #F1E4D6); color: var(--ink); padding: clamp(3.5rem, 8vw, 6rem) 0; }
+  .cta-inner { display: flex; justify-content: space-between; align-items: center; gap: 2rem; flex-wrap: wrap; }
+  .cta-title { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 700; letter-spacing: 0.16em; }
+  .cta-sub { margin-top: 0.9rem; font-size: 1.05rem; line-height: 1.9; color: var(--ink-soft); letter-spacing: 0.06em; }
+  .cta-actions { display: flex; flex-direction: column; gap: 0.9rem; min-width: 12rem; }
+  @media (max-width: 640px) { .cta-actions { flex-direction: row; flex-wrap: wrap; } }
+</style>

@@ -1,0 +1,51 @@
+---
+import Base from '../layouts/Base.astro'
+import EventCard from '../components/EventCard.astro'
+import { getEvents, PHASE_LABEL } from '../lib/events'
+import { CONTACT } from '../data/site'
+
+// 全站唯一的活動清單；首頁「近期活動」只是這裡「即將舉行／持續進行」的前三筆
+const { current, past } = await getEvents()
+---
+<Base
+  title="活動"
+  description="臺灣慢活教育學會的活動：即將舉行與持續進行的共學活動，以及已辦理的活動紀錄。"
+>
+  <div class="page" id="page-events">
+    <header class="page-head">
+      <div class="container">
+        <p class="crumbs"><a href="/">首頁</a> / 活動</p>
+        <h1>活動</h1>
+        <p class="lead">
+          一起參與，創造更多美好的學習時光。最新消息也可以關注學會的
+          <a class="text-link" href={CONTACT.facebook} target="_blank" rel="noopener">Facebook 粉絲專頁</a>。
+        </p>
+      </div>
+    </header>
+
+    <section class="block" id="current" aria-labelledby="current-title">
+      <div class="container">
+        <h2 id="current-title" class="block-title events-h">{PHASE_LABEL.current}</h2>
+        {current.length > 0 ? (
+          <div class="grid-3">{current.map((e) => <EventCard event={e} />)}</div>
+        ) : (
+          <p class="events-empty">目前沒有公告中的活動，新活動會公布在這裡。</p>
+        )}
+      </div>
+    </section>
+
+    {past.length > 0 && (
+      <section class="block block-alt" id="past" aria-labelledby="past-title">
+        <div class="container">
+          <h2 id="past-title" class="block-title events-h">{PHASE_LABEL.past}</h2>
+          <div class="grid-3">{past.map((e) => <EventCard event={e} />)}</div>
+        </div>
+      </section>
+    )}
+  </div>
+</Base>
+
+<style>
+  .events-h { margin-bottom: 2rem; }
+  .events-empty { font-size: 1rem; color: var(--ink-soft); line-height: 1.9; }
+</style>

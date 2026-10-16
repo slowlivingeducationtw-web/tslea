@@ -1,0 +1,29 @@
+---
+import { FORMATS } from '../data/formats'
+---
+<ul class="format-list">
+  {FORMATS.map((f) => (
+    <li class="format-item">
+      <span class="format-icon" aria-hidden="true">{f.icon}</span>
+      <div>
+        <h3 class="format-title">{f.title}</h3>
+        <p class="format-desc">{f.description}</p>
+      </div>
+    </li>
+  ))}
+</ul>
+
+<style>
+  .format-list {
+    list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2rem 1.75rem;
+  }
+  .format-item { display: flex; flex-direction: column; gap: 0.9rem; }
+  .format-icon {
+    width: 56px; height: 56px; border-radius: 50%; background: var(--forest-pale);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem;
+  }
+  .format-title { font-size: 1.2rem; font-weight: 600; color: var(--ink); letter-spacing: 0.06em; }
+  .format-desc { font-size: 1rem; color: var(--ink-soft); line-height: 1.9; margin-top: 0.5rem; }
+  @media (max-width: 1000px) { .format-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .format-list { grid-template-columns: minmax(0, 1fr); } }
+</style>

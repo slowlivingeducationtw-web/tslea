@@ -1,0 +1,157 @@
+---
+// 首頁主視覺輪播：每頁一句話＋一張照片（照片到位前用色塊）。
+// 柔和淡入淡出、每 6 秒換頁；滑鼠移入、鍵盤聚焦或按暫停時停止；
+// 使用者系統設定「減少動態」時不自動播放。
+import Photo from './Photo.astro'
+
+export type HeroSlide = {
+  pre?: string
+  /** 可用 <span class="nw">…</span> 包住不該拆開的詞組，換行只會發生在詞組之間 */
+  title: string
+  /** 長句用 'md' 較小字級 */
+  size?: 'lg' | 'md'
+  sub?: string
+  tone: 'forest' | 'mist' | 'clay' | 'leaf'
+  image: string | null
+  imageAlt: string
+}
+
+type Props = { slides: HeroSlide[]; interval?: number }
+const { slides, interval = 6000 } = Astro.props
+---
+<section class="hero-c" aria-roledescription="carousel" aria-label="學會主視覺" data-interval={interval}>
+  {slides.map((s, i) => (
+    <div class={`hero-slide tone-${s.tone}${i === 0 ? ' is-active' : ''}`}
+         role="group" aria-roledescription="slide" aria-label={`第 ${i + 1} 頁，共 ${slides.length} 頁`}
+         aria-hidden={i === 0 ? undefined : 'true'}>
+      <Photo src={s.image} alt={s.imageAlt} tone={s.tone === 'forest' ? 'forest' : s.tone}
+             icon="🌳" placeholder={`照片待補：${s.imageAlt}`} class="hero-c-media" eager={i === 0} />
+      <div class="hero-c-shade" aria-hidden="true"></div>
+      <div class="container hero-c-inner">
+        {s.pre && <p class="hero-c-pre">{s.pre}</p>}
+        {i === 0
+          ? <h1 class={`hero-c-title size-${s.size ?? 'lg'}`} set:html={s.title} />
+          : <p class={`hero-c-title size-${s.size ?? 'lg'}`} set:html={s.title} />}
+        {s.sub && <p class="hero-c-sub">{s.sub}</p>}
+      </div>
+    </div>
+  ))}
+
+  {slides.length > 1 && (
+    <div class="hero-ctrl">
+      <div class="hero-dots" role="group" aria-label="選擇頁面">
+        {slides.map((_, i) => (
+          <button type="button" class="hero-dot" data-go={i}
+                  aria-label={`顯示第 ${i + 1} 頁`} aria-current={i === 0 ? 'true' : undefined}></button>
+        ))}
+      </div>
+      <button type="button" class="hero-pause" aria-label="暫停輪播" data-state="playing">
+        <span class="i-pause" aria-hidden="true"></span><span class="i-play" aria-hidden="true"></span>
+      </button>
+    </div>
+  )}
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.hero-c[aria-roledescription="carousel"]').forEach((root) => {
+    const slides = [...root.querySelectorAll<HTMLElement>('.hero-slide')]
+    const dots = [...root.querySelectorAll<HTMLButtonElement>('.hero-dot')]
+    const pauseBtn = root.querySelector<HTMLButtonElement>('.hero-pause')
+    if (slides.length < 2) return
+
+    const interval = Number(root.dataset.interval) || 6000
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    let current = 0
+    let userPaused = reduce // 減少動態：預設不自動播放
+    let hover = false
+    let timer: number | undefined
+
+    function show(n: number) {
+      current = (n + slides.length) % slides.length
+      slides.forEach((s, i) => {
+        const on = i === current
+        s.classList.toggle('is-active', on)
+        if (on) s.removeAttribute('aria-hidden')
+        else s.setAttribute('aria-hidden', 'true')
+      })
+      dots.forEach((d, i) => (i === current ? d.setAttribute('aria-current', 'true') : d.removeAttribute('aria-current')))
+    }
+    function schedule() {
+      window.clearTimeout(timer)
+      if (userPaused || hover || document.hidden) return
+      timer = window.setTimeout(() => { show(current + 1); schedule() }, interval)
+    }
+    function setPaused(p: boolean) {
+      userPaused = p
+      if (pauseBtn) {
+        pauseBtn.dataset.state = p ? 'paused' : 'playing'
+        pauseBtn.setAttribute('aria-label', p ? '繼續輪播' : '暫停輪播')
+      }
+      schedule()
+    }
+
+    dots.forEach((d) => d.addEventListener('click', () => { show(Number(d.dataset.go)); schedule() }))
+    pauseBtn?.addEventListener('click', () => setPaused(!userPaused))
+    root.addEventListener('mouseenter', () => { hover = true; schedule() })
+    root.addEventListener('mouseleave', () => { hover = false; schedule() })
+    root.addEventListener('focusin', () => { hover = true; schedule() })
+    root.addEventListener('focusout', () => { hover = false; schedule() })
+    document.addEventListener('visibilitychange', schedule)
+
+    setPaused(userPaused)
+  })
+</script>
+
+<style>
+  .hero-c { position: relative; min-height: min(80vh, 760px); overflow: hidden; background: var(--forest-deep); }
+  .hero-slide {
+    position: absolute; inset: 0; display: flex; align-items: center;
+    opacity: 0; visibility: hidden; transition: opacity 1.2s ease, visibility 1.2s;
+  }
+  .hero-slide.is-active { opacity: 1; visibility: visible; position: relative; min-height: inherit; }
+  .hero-slide :global(.hero-c-media) { position: absolute; inset: 0; }
+  .hero-slide :global(.hero-c-media .photo-ph) { justify-content: flex-end; align-items: flex-end; padding: 1.2rem 1.5rem 4.5rem; }
+  .hero-slide.tone-mist :global(.hero-c-media) { background: linear-gradient(140deg, #6A8794, var(--slate)); }
+  .hero-slide.tone-clay :global(.hero-c-media) { background: linear-gradient(140deg, #A9774F, var(--clay-deep)); }
+  .hero-slide.tone-leaf :global(.hero-c-media) { background: linear-gradient(140deg, #7A8752, var(--olive)); }
+  .hero-slide :global(.hero-c-media .photo-ph) { color: rgba(255, 255, 255, 0.75); }
+  /* 置中文字用均勻柔和的遮罩，換上照片後文字依然清楚 */
+  .hero-c-shade { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(28, 46, 34, 0.5), rgba(28, 46, 34, 0.2) 75%); }
+  .hero-c-inner { position: relative; text-align: center; color: #fff; padding-top: 4rem; padding-bottom: 5rem; }
+  .hero-c-pre { font-size: clamp(1.5rem, 3.4vw, 2.4rem); font-weight: 700; letter-spacing: 0.3em; opacity: 0.95; }
+  .hero-c-title {
+    font-size: clamp(2rem, 5.4vw, 4rem); font-weight: 700; letter-spacing: 0.16em; line-height: 1.4;
+    margin: 0.4rem auto 0; max-width: 18em;
+  }
+  .hero-c-title.size-md { font-size: clamp(1.35rem, 3.8vw, 2.8rem); max-width: 22em; letter-spacing: 0.12em; }
+  .hero-c-title :global(.nw) { white-space: nowrap; }
+  .hero-c-sub { text-wrap: balance; margin: 1.6rem auto 0; max-width: 32em; font-size: clamp(1rem, 1.6vw, 1.15rem); line-height: 2; letter-spacing: 0.12em; opacity: 0.95; }
+
+  .hero-ctrl {
+    position: absolute; left: 0; right: 0; bottom: 1.6rem; z-index: 2;
+    display: flex; justify-content: center; align-items: center; gap: 1rem;
+  }
+  .hero-dots { display: flex; gap: 0.6rem; }
+  .hero-dot {
+    width: 12px; height: 12px; border-radius: 999px; border: 0; padding: 0; cursor: pointer;
+    background: rgba(255, 255, 255, 0.5); transition: width 0.3s, background 0.3s;
+  }
+  .hero-dot[aria-current='true'] { width: 32px; background: #fff; }
+  .hero-pause {
+    width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+    border: 1.5px solid rgba(255, 255, 255, 0.7); background: rgba(0, 0, 0, 0.15);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .hero-dot:focus-visible, .hero-pause:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+  .i-pause { width: 10px; height: 12px; border-left: 3px solid #fff; border-right: 3px solid #fff; }
+  .i-play { width: 0; height: 0; border-left: 11px solid #fff; border-top: 7px solid transparent; border-bottom: 7px solid transparent; margin-left: 3px; }
+  .hero-pause[data-state='playing'] .i-play,
+  .hero-pause[data-state='paused'] .i-pause { display: none; }
+
+  @media (max-width: 640px) {
+    .hero-c { min-height: 520px; }
+    .hero-c-inner { padding-top: 4rem; padding-bottom: 5.5rem; }
+    .hero-c-title { letter-spacing: 0.08em; }
+    .hero-c-title.size-md { letter-spacing: 0.04em; }
+  }
+</style>

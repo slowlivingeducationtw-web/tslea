@@ -1,0 +1,36 @@
+---
+// 有圖片就顯示圖片；沒有就顯示柔和色塊與「照片待補」說明，日後補上 src 即可替換。
+type Props = {
+  src?: string | null
+  alt?: string
+  width?: number
+  height?: number
+  tone?: 'mist' | 'clay' | 'leaf' | 'forest'
+  icon?: string
+  placeholder?: string
+  class?: string
+  eager?: boolean
+}
+const {
+  src,
+  alt = '',
+  width,
+  height,
+  tone = 'leaf',
+  icon = '🌱',
+  placeholder = '照片待補',
+  class: className = '',
+  eager = false,
+} = Astro.props
+---
+<div class={`photo tone-${tone} ${className}`}>
+  {src ? (
+    <img src={src} alt={alt} width={width} height={height}
+         loading={eager ? 'eager' : 'lazy'} decoding="async" />
+  ) : (
+    <div class="photo-ph" role="img" aria-label={alt || placeholder}>
+      <span class="ph-icon" aria-hidden="true">{icon}</span>
+      <span aria-hidden="true">{placeholder}</span>
+    </div>
+  )}
+</div>

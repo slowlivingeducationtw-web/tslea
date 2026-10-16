@@ -42,13 +42,13 @@ const GROUPS = [
     <section class="sec" style="background:var(--warm-white);padding-top:3rem">
       {/* 理事 */}
       <div style="margin-bottom:2.5rem">
-        <div style="font-size:0.72rem;letter-spacing:0.25em;color:var(--earth);margin-bottom:1.5rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border)">理　事</div>
+        <div style="font-size:0.86rem;letter-spacing:0.25em;color:var(--earth);margin-bottom:1.5rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border)">理　事</div>
 
         {leaders.length > 0 && (
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1px;margin-bottom:1px">
             {leaders.map((p, i) => (
               <div style={`background:var(--earth-pale);padding:1.4rem 1.5rem;border-top:2px solid var(--earth${i === 0 ? '' : '-light'})`}>
-                <div style="font-size:0.65rem;letter-spacing:0.2em;color:var(--earth);margin-bottom:0.4rem">{p.role}</div>
+                <div style="font-size:0.82rem;letter-spacing:0.2em;color:var(--earth);margin-bottom:0.4rem">{p.role}</div>
                 <div style="font-size:1rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">{p.name}</div>
               </div>
             ))}
@@ -59,7 +59,7 @@ const GROUPS = [
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:1px">
             {members.map((p) => (
               <div style="background:var(--cream);padding:1.2rem 1.5rem">
-                <div style="font-size:0.63rem;letter-spacing:0.2em;color:var(--muted);margin-bottom:0.35rem">{p.role}</div>
+                <div style="font-size:0.82rem;letter-spacing:0.2em;color:var(--muted);margin-bottom:0.35rem">{p.role}</div>
                 <div style="font-size:0.95rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">{p.name}</div>
               </div>
             ))}
@@ -72,14 +72,14 @@ const GROUPS = [
         if (list.length === 0) return null
         return (
           <div style={gi === GROUPS.length - 1 ? '' : 'margin-bottom:2.5rem'}>
-            <div style={`font-size:0.72rem;letter-spacing:0.25em;color:var(--${g.accent});margin-bottom:1.5rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border)`}>{g.label}</div>
+            <div style={`font-size:0.86rem;letter-spacing:0.25em;color:var(--${g.accent});margin-bottom:1.5rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border)`}>{g.label}</div>
             <div style={`display:grid;grid-template-columns:repeat(auto-fill,minmax(${g.min}px,1fr));gap:1px`}>
               {list.map((p) => (
                 <div style={`background:var(--${g.bg});padding:1.2rem 1.5rem`}>
-                  <div style={`font-size:0.63rem;letter-spacing:0.2em;color:var(--${g.accent});margin-bottom:0.35rem`}>{p.role}</div>
-                  <div style="font-size:0.9rem;font-weight:600;letter-spacing:0.1em;color:var(--charcoal);line-height:1.6">
+                  <div style={`font-size:0.82rem;letter-spacing:0.2em;color:var(--${g.accent});margin-bottom:0.35rem`}>{p.role}</div>
+                  <div style="font-size:1rem;font-weight:600;letter-spacing:0.1em;color:var(--charcoal);line-height:1.6">
                     {p.name}
-                    {p.note && <><br /><span style="font-size:0.78rem;font-weight:400;letter-spacing:0.06em;color:var(--muted)">{p.note}</span></>}
+                    {p.note && <><br /><span style="font-size:0.94rem;font-weight:400;letter-spacing:0.06em;color:var(--muted)">{p.note}</span></>}
                   </div>
                 </div>
               ))}

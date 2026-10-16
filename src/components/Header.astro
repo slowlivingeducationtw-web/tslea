@@ -1,0 +1,47 @@
+---
+import { MAIN_NAV } from '../data/site'
+
+const { path } = Astro.props
+const current = (href: string) => (href === path ? 'page' : undefined)
+// 子選單裡有目前頁面時，主項目也標示為所在區塊
+const inSection = (item: (typeof MAIN_NAV)[number]) =>
+  item.href === path || item.children?.some((c) => c.href === path)
+---
+<header class="site-header" id="mainNav">
+  <div class="site-header-inner">
+    <a href="/" class="site-logo" aria-label="臺灣慢活教育學會 首頁">
+      <img src="/images/logo-dark.png" alt="臺灣慢活教育學會 Slow Living Education Society of Taiwan"
+           width="720" height="161">
+    </a>
+
+    <nav class="site-nav" id="navLinks" aria-label="主要導覽">
+      <ul class="nav-top">
+        {MAIN_NAV.map((item) => (
+          <li class={item.children ? 'has-sub' : undefined}>
+            <a href={item.href} class={inSection(item) ? 'in-section' : undefined}
+               aria-current={current(item.href)}>
+              {item.label}
+              {item.children && <span class="sub-caret" aria-hidden="true"></span>}
+            </a>
+            {item.children && (
+              <ul class="nav-sub" aria-label={`${item.label} 子選單`}>
+                {item.children.map((c) => (
+                  <li><a href={c.href}>{c.label}</a></li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+      <a href="/join" class="btn btn-solid nav-cta-menu">加入我們</a>
+    </nav>
+
+    <div class="header-actions">
+      <a href="/join" class="btn btn-solid btn-sm nav-cta">加入我們</a>
+      <button class="menu-btn" id="navToggle" type="button"
+              aria-label="開啟選單" aria-expanded="false" aria-controls="navLinks">
+        <span class="bars" aria-hidden="true"></span>
+      </button>
+    </div>
+  </div>
+</header>

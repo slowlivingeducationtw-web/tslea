@@ -23,13 +23,13 @@ const page = await fetchOne<Page>(Q.boardArea, {}, '理監事專區頁面')
       <h1 class="sec-title" style="margin-bottom:1.5rem">{page.title}</h1>
 
       {page.intro && (
-        <p style="font-size:0.86rem;line-height:2.2;color:var(--muted);letter-spacing:0.05em;margin-bottom:2.5rem">{page.intro}</p>
+        <p style="font-size:1rem;line-height:2.2;color:var(--muted);letter-spacing:0.05em;margin-bottom:2.5rem">{page.intro}</p>
       )}
 
       {page.accessNote && (
         <div style="border:1px solid var(--border);border-top:3px solid var(--sage);background:var(--sage-pale);padding:2rem 1.8rem;margin-bottom:1.5rem">
           <h2 style="font-size:0.95rem;letter-spacing:0.14em;font-weight:600;margin-bottom:1rem">取得存取權限</h2>
-          <p style="font-size:0.82rem;line-height:2.1;color:var(--muted);letter-spacing:0.04em">
+          <p style="font-size:0.98rem;line-height:2.1;color:var(--muted);letter-spacing:0.04em">
             {page.accessNote}<br>
             <a href="mailto:slowlivingeducation@gmail.com?subject=申請理監事專區存取權限"
                style="color:var(--sage);border-bottom:1px solid var(--sage-light);text-decoration:none;padding-bottom:1px">
@@ -39,7 +39,7 @@ const page = await fetchOne<Page>(Q.boardArea, {}, '理監事專區頁面')
           {page.driveUrl && (
             <p style="margin-top:1.2rem">
               <a href={page.driveUrl} target="_blank" rel="noopener" class="btn-primary"
-                 style="display:inline-block;text-decoration:none;font-size:0.8rem">開啟共用雲端硬碟 →</a>
+                 style="display:inline-block;text-decoration:none;font-size:0.96rem">開啟共用雲端硬碟 →</a>
             </p>
           )}
         </div>
@@ -48,11 +48,11 @@ const page = await fetchOne<Page>(Q.boardArea, {}, '理監事專區頁面')
       {page.whyNote && (
         <div style="border:1px solid var(--border);border-top:3px solid var(--earth);background:var(--earth-pale);padding:2rem 1.8rem">
           <h2 style="font-size:0.95rem;letter-spacing:0.14em;font-weight:600;margin-bottom:1rem">為什麼文件不放在網站上</h2>
-          <p style="font-size:0.82rem;line-height:2.1;color:var(--muted);letter-spacing:0.04em">{page.whyNote}</p>
+          <p style="font-size:0.98rem;line-height:2.1;color:var(--muted);letter-spacing:0.04em">{page.whyNote}</p>
         </div>
       )}
 
-      <p style="font-size:0.75rem;line-height:2;color:var(--muted);letter-spacing:0.1em;margin-top:2.5rem;text-align:center">
+      <p style="font-size:0.9rem;line-height:2;color:var(--muted);letter-spacing:0.1em;margin-top:2.5rem;text-align:center">
         如需新增會議記錄或上傳文件，請聯繫秘書處
       </p>
     </section>

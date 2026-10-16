@@ -39,7 +39,7 @@ const ym = (d: string) => (d ? d.slice(0, 7).replace('-', '.') : '')
       <div class="col-header-inner">
         <p class="sec-label">Column</p>
         <h2 class="sec-title" style="margin-bottom:1rem">慢活專欄</h2>
-        <p style="font-size:0.85rem;line-height:2;color:var(--muted);max-width:600px;">由學會各領域會員執筆，以文字、圖文分享慢活實踐的日常智慧。每一篇文章，都是一個邀請——邀請你放慢腳步，重新與自己相遇。</p>
+        <p style="font-size:1rem;line-height:2;color:var(--muted);max-width:600px;">由學會各領域會員執筆，以文字、圖文分享慢活實踐的日常智慧。每一篇文章，都是一個邀請——邀請你放慢腳步，重新與自己相遇。</p>
         <div class="col-filter-bar">
           {CATEGORIES.map((c, i) => (
             <button class={`filter-btn${i === 0 ? ' active' : ''}`} data-filter={c.value} type="button">{c.label}</button>
@@ -62,7 +62,7 @@ const ym = (d: string) => (d ? d.slice(0, 7).replace('-', '.') : '')
               <div style="display:flex;gap:0.6rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
                 <span class={`article-cat cat-${a.category}`}>{CAT_LABEL[a.category] ?? '其他'}</span>
                 {a.series && (
-                  <span style={`font-size:0.68rem;letter-spacing:0.18em;color:var(--${a.accent});padding:0.2rem 0.7rem;border:1px solid var(--${a.accent}-light)`}>{a.series}</span>
+                  <span style={`font-size:0.82rem;letter-spacing:0.18em;color:var(--${a.accent});padding:0.2rem 0.7rem;border:1px solid var(--${a.accent}-light)`}>{a.series}</span>
                 )}
               </div>
             </div>
@@ -105,20 +105,33 @@ const ym = (d: string) => (d ? d.slice(0, 7).replace('-', '.') : '')
         )
       })}
     </div>
+    <p id="colEmpty" hidden style="padding:3rem 1.5rem;text-align:center;font-size:0.95rem;line-height:2;color:var(--muted);">
+      這個分類目前還沒有文章，歡迎<a href="/contact" style="color:var(--earth)">投稿分享</a>。
+    </p>
   </div>
 
   <script is:inline>
     (function () {
       const btns = document.querySelectorAll('.filter-btn');
       const cards = document.querySelectorAll('.article-card');
+      const empty = document.getElementById('colEmpty');
       btns.forEach(function (b) {
         b.addEventListener('click', function () {
           const cat = b.dataset.filter;
           btns.forEach(function (x) { x.classList.remove('active'); });
           b.classList.add('active');
-          cards.forEach(function (c) { c.hidden = !(cat === 'all' || c.dataset.cat === cat); });
+          let shown = 0;
+          cards.forEach(function (c) {
+            c.hidden = !(cat === 'all' || c.dataset.cat === cat);
+            if (!c.hidden) shown++;
+          });
+          if (empty) empty.hidden = shown > 0;
         });
       });
+      // 首頁主題卡片會連到 /column?cat=health 這類網址，進來時直接套用該分類
+      const want = new URLSearchParams(location.search).get('cat');
+      const target = want && document.querySelector('.filter-btn[data-filter="' + want + '"]');
+      if (target) target.click();
     })();
   </script>
 </Base>

@@ -26,7 +26,7 @@ const page = await fetchOne<Page>(Q.donate, {}, '捐款支持頁面')
       {page.label && <p class="sec-label">{page.label}</p>}
       <h2 class="sec-title">{page.title}</h2>
       {page.intro && (
-        <p style="font-size:0.88rem;line-height:2.3;color:var(--muted);max-width:620px">{page.intro}</p>
+        <p style="font-size:1rem;line-height:2.3;color:var(--muted);max-width:620px">{page.intro}</p>
       )}
     </div>
 
@@ -49,23 +49,23 @@ const page = await fetchOne<Page>(Q.donate, {}, '捐款支持頁面')
           <p class="sec-label">Donate</p>
           <h3 style="font-size:1.2rem;font-weight:300;letter-spacing:0.1em;color:var(--charcoal);margin-bottom:1.5rem">捐款方式</h3>
           <div style="background:var(--cream);padding:2.5rem;border:1px solid var(--border)">
-            <div style="font-size:0.78rem;letter-spacing:0.18em;color:var(--muted);margin-bottom:0.5rem">銀行匯款</div>
-            <div style="font-size:0.88rem;color:var(--charcoal);line-height:2.2;margin-bottom:2rem">
+            <div style="font-size:0.94rem;letter-spacing:0.18em;color:var(--muted);margin-bottom:0.5rem">銀行匯款</div>
+            <div style="font-size:1rem;color:var(--charcoal);line-height:2.2;margin-bottom:2rem">
               戶名：{page.accountName}<br />
               銀行：{page.bankName}<br />
               帳號：{page.accountNo}
             </div>
             {page.receiptNote && (
               <>
-                <div style="font-size:0.78rem;letter-spacing:0.18em;color:var(--muted);margin-bottom:0.5rem">捐款收據</div>
-                <div style="font-size:0.84rem;color:var(--muted);line-height:2">{page.receiptNote}</div>
+                <div style="font-size:0.94rem;letter-spacing:0.18em;color:var(--muted);margin-bottom:0.5rem">捐款收據</div>
+                <div style="font-size:1rem;color:var(--muted);line-height:2">{page.receiptNote}</div>
               </>
             )}
           </div>
 
           {page.notes && page.notes.length > 0 && (
             <div style="margin-top:1.5rem;padding:1.5rem;background:var(--sage-pale);border-left:3px solid var(--sage)">
-              <div style="font-size:0.8rem;line-height:2;color:var(--sage)">
+              <div style="font-size:0.96rem;line-height:2;color:var(--sage)">
                 {page.notes.map((n, i) => (
                   <>
                     ✦ {n}

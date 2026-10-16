@@ -1,0 +1,42 @@
+---
+import { THEMES } from '../data/themes'
+import { phaseOf, PHASE_LABEL, type CmsEvent } from '../lib/events'
+
+type Props = { event: CmsEvent }
+const { event: e } = Astro.props
+const phase = phaseOf(e)
+// 分類標籤是三大主題之一時沿用主題色，其他（共學活動、慢活專欄…）用綠色
+const tone = THEMES.find((t) => t.title === e.tag)?.tone ?? 'leaf'
+---
+<article class={`card event-card phase-${phase}`}>
+  <div class={`event-band photo tone-${tone}`} aria-hidden="true">
+    <span>{e.icon}</span>
+  </div>
+  <div class="card-body">
+    <div class="event-top">
+      <span class={`event-phase phase-${phase}`}>{PHASE_LABEL[phase]}</span>
+      {e.tag && <span class={`chip tone-${tone}`}>{e.tag}</span>}
+    </div>
+    <p class="event-date">{e.dateLabel}</p>
+    <h3 class="card-title">{e.title}</h3>
+    {e.description && <p class="card-text">{e.description}</p>}
+  </div>
+</article>
+
+<style>
+  .event-card:hover { transform: none; box-shadow: var(--shadow); }
+  .event-band { height: 112px; display: flex; align-items: center; justify-content: center; font-size: 2.6rem; }
+  .event-top { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  .event-phase {
+    font-size: 0.82rem; font-weight: 600; letter-spacing: 0.06em;
+    padding: 0.2rem 0.7rem; border-radius: 999px;
+  }
+  .event-phase.phase-current { background: var(--forest); color: #fff; }
+  .event-phase.phase-past { background: var(--paper); color: var(--ink-soft); border: 1px solid var(--line); }
+  /* global.css 舊版也有 .event-date（英文斜體），這裡明確改回中文字體 */
+  .event-date {
+    font-family: 'Noto Sans TC', sans-serif; font-style: normal; margin: 0;
+    font-size: 0.95rem; color: var(--forest); letter-spacing: 0.08em; font-weight: 600;
+  }
+  .phase-past .event-band { filter: saturate(0.4); }
+</style>

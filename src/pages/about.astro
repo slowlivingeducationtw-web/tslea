@@ -1,0 +1,70 @@
+---
+import Base from '../layouts/Base.astro'
+import PortableText from '../components/PortableText.astro'
+import Photo from '../components/Photo.astro'
+import { fetchOne, Q } from '../lib/sanity'
+
+// 學會簡介沿用後台「首頁文案 → 關於學會」，在後台改了這裡會一起更新
+type Home = { aboutBody?: any[] }
+const home = await fetchOne<Home>(Q.home, {}, '首頁文案')
+
+const LINKS = [
+  { href: '/board', title: '理監事名單', text: '本屆理事、監事與行政秘書處。' },
+  { href: '/plans', title: '年度計畫', text: '會務運作、業務發展、專案計畫與財務規劃。' },
+  { href: '/donate', title: '捐款支持', text: '支持學會推動慢活教育的公益行動。' },
+  { href: '/contact', title: '聯絡我們', text: '入會諮詢、專欄投稿、合作與贊助。' },
+]
+---
+<Base
+  title="認識學會"
+  description="臺灣慢活教育學會推廣慢活教育與終身學習，以身心健康、藝術陪伴、生態永續三大共學主題，營造互助共好的生活文化。"
+>
+  <div class="page" id="page-about">
+    <header class="page-head">
+      <div class="container">
+        <p class="crumbs"><a href="/">首頁</a> / 認識學會</p>
+        <h1>認識學會</h1>
+        <p class="lead">以「慢活」為語言，搭建個人與社會的橋梁。</p>
+      </div>
+    </header>
+
+    <section class="block">
+      <div class="container about-page">
+        <div class="about-page-body">
+          <PortableText value={home.aboutBody} />
+        </div>
+        <Photo alt="學會夥伴共學交流" tone="leaf" icon="🍃" placeholder="照片待補：學會活動或共學情境" class="about-page-media" />
+      </div>
+    </section>
+
+    <section class="block block-alt" aria-labelledby="about-more">
+      <div class="container">
+        <h2 id="about-more" class="block-title">組織與參與</h2>
+        <ul class="grid-3 about-links">
+          {LINKS.map((l) => (
+            <li class="card">
+              <div class="card-body">
+                <h3 class="card-title"><a href={l.href}>{l.title}</a></h3>
+                <p class="card-text">{l.text}</p>
+                <div class="card-foot"><span class="card-more" aria-hidden="true">前往 →</span></div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .about-page { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: clamp(2rem, 5vw, 4rem); align-items: start; }
+  .about-page-body :global(.pt) { font-size: 1rem; line-height: 2.2; }
+  .about-page :global(.about-page-media) { aspect-ratio: 4 / 5; border-radius: var(--radius); position: sticky; top: calc(var(--header-h) + 1.5rem); }
+  .about-links { list-style: none; margin-top: 1.8rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 1000px) { .about-links { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 860px) {
+    .about-page { grid-template-columns: minmax(0, 1fr); }
+    .about-page :global(.about-page-media) { position: static; aspect-ratio: 16 / 10; }
+  }
+  @media (max-width: 560px) { .about-links { grid-template-columns: minmax(0, 1fr); } }
+</style>

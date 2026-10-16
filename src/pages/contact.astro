@@ -30,7 +30,7 @@ const page = await fetchOne<Page>(Q.contact, {}, '聯絡我們頁面')
             <div class="contact-card-label">{c.title}</div>
             <div
               class="contact-card-value"
-              style={c.body && c.body.length > 16 ? 'font-size:0.78rem;word-break:break-all' : 'font-size:0.85rem;line-height:1.7'}
+              style={c.body && c.body.length > 16 ? 'font-size:0.9rem;letter-spacing:0;overflow-wrap:anywhere' : 'font-size:1rem;line-height:1.7'}
             >
               {c.link?.url ? (
                 <a href={c.link.url} style="color:var(--sage);text-decoration:none">{c.body}</a>
@@ -44,7 +44,7 @@ const page = await fetchOne<Page>(Q.contact, {}, '聯絡我們頁面')
 
       {page.notes && page.notes.length > 0 && (
         <div style="margin-top:3rem;padding:2rem;background:white;border:1px solid var(--border);max-width:500px;margin-left:auto;margin-right:auto">
-          <p style="font-size:0.78rem;letter-spacing:0.15em;color:var(--muted);line-height:2">
+          <p style="font-size:0.94rem;letter-spacing:0.15em;color:var(--muted);line-height:2">
             {page.notes.map((n, i) => (
               <>
                 ✦ {n}

@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
-import Nav from '../components/Nav.astro';
+import '../styles/site.css';
+import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 
 const {
@@ -67,34 +68,42 @@ const org = {
 <meta name="twitter:description" content={description}>
 <meta name="twitter:image" content={site + ogImage}>
 
-<meta name="theme-color" content="#f5f0e8">
+<meta name="theme-color" content="#F5EFE5">
 <link rel="icon" href="/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 
 <script type="application/ld+json" set:html={JSON.stringify(org)} />
 {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 </head>
 <body>
-<Nav path={path} />
+<Header path={path} />
 <slot />
 <Footer />
 
 <script is:inline>
 // ── 行動版選單 ──
 (function () {
-  const links = document.getElementById('navLinks');
+  const menu = document.getElementById('navLinks');
   const btn = document.getElementById('navToggle');
-  if (!btn || !links) return;
-  btn.addEventListener('click', function () {
-    const isOpen = links.classList.toggle('open');
-    btn.classList.toggle('open', isOpen);
-    btn.setAttribute('aria-expanded', String(isOpen));
-    document.body.style.overflow = isOpen ? 'hidden' : '';
+  if (!btn || !menu) return;
+  function setOpen(open) {
+    menu.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', String(open));
+    btn.setAttribute('aria-label', open ? '關閉選單' : '開啟選單');
+    document.body.style.overflow = open ? 'hidden' : '';
+  }
+  btn.addEventListener('click', function () { setOpen(!menu.classList.contains('open')); });
+  // 點選單內連結（含同頁錨點）或按 Esc 時收起選單
+  menu.addEventListener('click', function (e) { if (e.target.closest('a')) setOpen(false); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && menu.classList.contains('open')) { setOpen(false); btn.focus(); }
   });
+  // 從手機寬度拉寬到桌面時，避免頁面停在鎖住捲動的狀態
+  window.matchMedia('(min-width: 1101px)').addEventListener('change', function (m) { if (m.matches) setOpen(false); });
 })();
 
 // ── 捲動顯現 ──
