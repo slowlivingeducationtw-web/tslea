@@ -1,6 +1,7 @@
 ---
 import { toHTML } from '@portabletext/to-html'
 import { imageUrl, imageDims } from '../lib/sanity'
+import { videoHtml } from '../lib/video'
 
 const { value, class: className = '' } = Astro.props
 
@@ -41,6 +42,7 @@ const html = value
         types: {
           verse: ({ value: v }) => `<div class="pt-verse">${esc(v.text)}</div>`,
           figure: ({ value: v }) => figureHtml(v),
+          videoEmbed: ({ value: v }) => videoHtml(v.url, v.caption || '影片', v.caption),
           imageRow: ({ value: v }) => {
             const imgs = (v.images || []).map((i: any) => figureHtml(i, true)).join('')
             return `<div><div class="pt-row">${imgs}</div>${

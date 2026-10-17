@@ -1,11 +1,16 @@
 ---
-import { MAIN_NAV } from '../data/site'
+import { getNavigation, isExternal, type NavItem } from '../lib/site'
 
+// 選單內容在後台「選單與頁尾」編輯
 const { path } = Astro.props
+const nav = await getNavigation()
+const items = nav.mainNav ?? []
+const cta = nav.headerCta
 const current = (href: string) => (href === path ? 'page' : undefined)
 // 子選單裡有目前頁面時，主項目也標示為所在區塊
-const inSection = (item: (typeof MAIN_NAV)[number]) =>
+const inSection = (item: NavItem) =>
   item.href === path || item.children?.some((c) => c.href === path)
+const ext = (href: string) => (isExternal(href) ? { target: '_blank', rel: 'noopener' } : {})
 ---
 <header class="site-header" id="mainNav">
   <div class="site-header-inner">
@@ -16,28 +21,28 @@ const inSection = (item: (typeof MAIN_NAV)[number]) =>
 
     <nav class="site-nav" id="navLinks" aria-label="主要導覽">
       <ul class="nav-top">
-        {MAIN_NAV.map((item) => (
-          <li class={item.children ? 'has-sub' : undefined}>
+        {items.map((item) => (
+          <li class={item.children?.length ? 'has-sub' : undefined}>
             <a href={item.href} class={inSection(item) ? 'in-section' : undefined}
-               aria-current={current(item.href)}>
+               aria-current={current(item.href)} {...ext(item.href)}>
               {item.label}
-              {item.children && <span class="sub-caret" aria-hidden="true"></span>}
+              {item.children?.length ? <span class="sub-caret" aria-hidden="true"></span> : null}
             </a>
-            {item.children && (
+            {item.children?.length ? (
               <ul class="nav-sub" aria-label={`${item.label} 子選單`}>
                 {item.children.map((c) => (
-                  <li><a href={c.href}>{c.label}</a></li>
+                  <li><a href={c.href} {...ext(c.href)}>{c.label}</a></li>
                 ))}
               </ul>
-            )}
+            ) : null}
           </li>
         ))}
       </ul>
-      <a href="/join" class="btn btn-solid nav-cta-menu">加入我們</a>
+      {cta && <a href={cta.href} class="btn btn-solid nav-cta-menu">{cta.label}</a>}
     </nav>
 
     <div class="header-actions">
-      <a href="/join" class="btn btn-solid btn-sm nav-cta">加入我們</a>
+      {cta && <a href={cta.href} class="btn btn-solid btn-sm nav-cta">{cta.label}</a>}
       <button class="menu-btn" id="navToggle" type="button"
               aria-label="開啟選單" aria-expanded="false" aria-controls="navLinks">
         <span class="bars" aria-hidden="true"></span>

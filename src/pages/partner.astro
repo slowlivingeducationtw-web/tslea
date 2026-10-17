@@ -1,85 +1,147 @@
 ---
 import Base from '../layouts/Base.astro'
-import { mailto } from '../data/site'
+import PortableText from '../components/PortableText.astro'
+import { fetchOne, Q } from '../lib/sanity'
+import { getSettings, cardHref } from '../lib/site'
 
-// 與我們合作：個人捐款連到既有的 /donate；其餘三項尚無線上表單，
-// 先以「預先填好主旨的 Email」聯絡學會，表單完成後把 href 換掉即可。
-// 說明文字只寫已發生或年度計畫已列的合作方式（校園放映座談、SEL 校園講座、企業贊助公益專案）。
-const WAYS = [
-  {
-    id: 'donate',
-    icon: '💚',
-    title: '個人捐款',
-    text: '您的支持將用於推動慢活共學活動、藝術陪伴與公益專案，讓更多人有機會放慢腳步、一起學習。',
-    cta: '前往捐款支持',
-    href: '/donate',
-  },
-  {
-    id: 'business',
-    icon: '🤝',
-    title: '企業合作',
-    text: '歡迎理念相近的企業贊助學會的公益專案活動，或與我們共同規劃合作方案，一起推廣慢活教育。',
-    cta: '來信洽談企業合作',
-    href: mailto('企業合作洽詢'),
-  },
-  {
-    id: 'school',
-    icon: '🏫',
-    title: '合作學校',
-    text: '歡迎學校與我們聯繫，共同規劃校園講座、紀錄片放映與映後座談等活動，把社會情緒學習與慢活實踐帶進校園。',
-    cta: '來信洽談學校合作',
-    href: mailto('學校合作洽詢'),
-  },
-  {
-    id: 'talk',
-    icon: '🎙️',
-    title: '課程演講邀約',
-    text: '學會夥伴來自身心健康、藝術陪伴、生態永續等不同領域。歡迎機關、社區與團體邀請講座或課程，來信請告訴我們時間、對象、人數與希望的主題。',
-    cta: '來信邀約課程演講',
-    href: mailto('課程演講邀約'),
-  },
-]
+// 全部內容在後台「頁面文案 → 與我們合作」。
+// 卡片按鈕：有填「按鈕連結」（例如日後的線上表單）就用它，沒有就寄信給學會並帶入主旨。
+type Card = {
+  _key: string
+  anchor?: string
+  icon?: string
+  title: string
+  text?: string
+  ctaLabel: string
+  href?: string
+  emailSubject?: string
+  note?: string
+}
+type Page = { title: string; lead?: string; seoDescription?: string; cards?: Card[]; footnote?: any[] }
+// 「個人捐款」區塊的內容在後台「頁面文案 → 與我們合作・捐款資訊」（原本的捐款支持頁，/donate 會轉到這裡）
+type Donate = {
+  title?: string
+  intro?: string
+  uses?: { _key: string; icon?: string; title: string; description?: string }[]
+  accountName?: string
+  bankName?: string
+  accountNo?: string
+  receiptNote?: string
+  notes?: string[]
+}
+const [page, settings, donate] = await Promise.all([
+  fetchOne<Page>(Q.partnerPage, {}, '與我們合作頁面'),
+  getSettings(),
+  fetchOne<Donate>(Q.donate, {}, '捐款資訊'),
+])
+// 個人捐款已經有完整區塊，卡片只列其他合作方式
+const cards = (page.cards ?? []).filter((c) => c.anchor !== 'donate')
 ---
 <Base
-  title="與我們合作"
-  description="與臺灣慢活教育學會合作：個人捐款、企業合作、合作學校、課程演講邀約。"
+  title={page.title}
+  description={page.seoDescription}
 >
   <div class="page" id="page-partner">
     <header class="page-head">
       <div class="container">
-        <p class="crumbs"><a href="/">首頁</a> / 與我們合作</p>
-        <h1>與我們合作</h1>
-        <p class="lead">慢活教育需要更多夥伴一起推動。無論是個人、企業、學校或團體，都歡迎用適合的方式與我們同行。</p>
+        <p class="crumbs"><a href="/">首頁</a> / {page.title}</p>
+        <h1>{page.title}</h1>
+        {page.lead && <p class="lead">{page.lead}</p>}
       </div>
     </header>
 
-    <section class="block">
+    <section class="block" id="donate" aria-labelledby="donate-title">
       <div class="container">
+        <h2 id="donate-title" class="block-title">{donate.title || '個人捐款'}</h2>
+        {donate.intro && <p class="donate-intro">{donate.intro}</p>}
+        <div class="donate-grid">
+          {donate.uses?.length ? (
+            <div>
+              <h3 class="donate-h">您的捐款用於</h3>
+              <ul class="donate-uses">
+                {donate.uses.map((u) => (
+                  <li>
+                    {u.icon && <span class="donate-use-icon" aria-hidden="true">{u.icon}</span>}
+                    <div>
+                      <p class="donate-use-title">{u.title}</p>
+                      {u.description && <p class="donate-use-text">{u.description}</p>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          <div class="card donate-box">
+            <div class="card-body">
+              <h3 class="donate-h">捐款方式・銀行匯款</h3>
+              <dl class="donate-bank">
+                {donate.accountName && <div><dt>戶名</dt><dd>{donate.accountName}</dd></div>}
+                {donate.bankName && <div><dt>銀行</dt><dd>{donate.bankName}</dd></div>}
+                {donate.accountNo && <div><dt>帳號</dt><dd>{donate.accountNo}</dd></div>}
+              </dl>
+              {donate.receiptNote && (
+                <>
+                  <h4 class="donate-sub">捐款收據</h4>
+                  <p class="donate-note">{donate.receiptNote}</p>
+                </>
+              )}
+              {donate.notes?.length ? (
+                <ul class="donate-notes">{donate.notes.map((n) => <li>{n}</li>)}</ul>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block block-alt" id="ways" aria-labelledby="ways-title">
+      <div class="container">
+        <h2 id="ways-title" class="block-title ways-title">企業、學校與團體合作</h2>
         <ul class="partner-list">
-          {WAYS.map((w) => (
-            <li class="card partner-card" id={w.id}>
+          {cards.map((c) => (
+            <li class="card partner-card" id={c.anchor}>
               <div class="card-body">
-                <span class="partner-icon" aria-hidden="true">{w.icon}</span>
-                <h2 class="card-title">{w.title}</h2>
-                <p class="card-text">{w.text}</p>
+                <span class="partner-icon" aria-hidden="true">{c.icon}</span>
+                <h2 class="card-title">{c.title}</h2>
+                {c.text && <p class="card-text">{c.text}</p>}
                 <div class="card-foot">
-                  <a class="btn btn-solid btn-sm" href={w.href}>{w.cta}</a>
+                  <a class="btn btn-solid btn-sm" href={cardHref(c, settings.email)}>{c.ctaLabel}</a>
                 </div>
               </div>
             </li>
           ))}
         </ul>
-        <p class="partner-more">其他合作想法，也歡迎前往<a class="text-link" href="/contact">聯絡我們</a>。</p>
+        {page.footnote && <div class="partner-more rich-links"><PortableText value={page.footnote} /></div>}
       </div>
     </section>
   </div>
 </Base>
 
 <style>
-  .partner-list { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.25rem, 2vw, 2rem); }
+  .partner-list { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(1.25rem, 2vw, 2rem); }
+  @media (max-width: 1000px) { .partner-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  /* 個人捐款 */
+  #donate { scroll-margin-top: calc(var(--header-h) + 1rem); }
+  .donate-intro { margin: 1rem 0 2.4rem; max-width: 42em; font-size: 1.05rem; line-height: 2; color: var(--ink-soft); }
+  .donate-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(2rem, 4vw, 4rem); align-items: start; }
+  .donate-h { font-size: 1.15rem; font-weight: 700; color: var(--ink); letter-spacing: 0.08em; margin-bottom: 1.2rem; }
+  .donate-uses { list-style: none; display: grid; gap: 1.3rem; }
+  .donate-uses li { display: flex; gap: 1rem; align-items: flex-start; }
+  .donate-use-icon { flex: none; width: 46px; height: 46px; border-radius: 50%; background: var(--forest-pale); display: inline-flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+  .donate-use-title { font-weight: 600; font-size: 1.05rem; color: var(--ink); }
+  .donate-use-text { margin-top: 0.2rem; font-size: 0.98rem; line-height: 1.85; color: var(--ink-soft); }
+  .donate-bank { display: grid; gap: 0.5rem; font-size: 1rem; }
+  .donate-bank div { display: flex; gap: 1rem; }
+  .donate-bank dt { flex: none; width: 3em; color: var(--ink-soft); }
+  .donate-bank dd { margin: 0; font-weight: 600; color: var(--ink); }
+  .donate-sub { margin-top: 1.6rem; font-size: 0.95rem; color: var(--ink-soft); font-weight: 600; letter-spacing: 0.08em; }
+  .donate-note { margin-top: 0.3rem; font-size: 0.98rem; line-height: 1.9; color: var(--ink-soft); }
+  .donate-notes { margin-top: 1.4rem; padding: 1rem 1.2rem 1rem 2.2rem; background: var(--forest-pale); border-radius: var(--radius-sm); font-size: 0.95rem; line-height: 1.95; color: var(--forest-deep); }
+  @media (max-width: 860px) { .donate-grid { grid-template-columns: minmax(0, 1fr); } }
   .partner-card { scroll-margin-top: calc(var(--header-h) + 1.5rem); }
   .partner-card:target { outline: 3px solid var(--forest); outline-offset: 3px; }
   .partner-icon { font-size: 2rem; }
+  .ways-title { margin-bottom: 2rem; }
   .partner-more { margin-top: 2.5rem; font-size: 1rem; color: var(--ink-soft); line-height: 2; }
   @media (max-width: 720px) { .partner-list { grid-template-columns: minmax(0, 1fr); } }
 </style>

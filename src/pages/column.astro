@@ -1,137 +1,79 @@
 ---
+// 慢活專欄列表：版型與活動頁一致（頁首→分類篩選→卡片）。
+// 上方文字在後台「頁面文案 → 慢活專欄」，文章在「內容 → 專欄文章」。
 import Base from '../layouts/Base.astro'
-import { sanity, Q, imageUrl, imageDims } from '../lib/sanity'
+import PortableText from '../components/PortableText.astro'
+import ArticleCard from '../components/ArticleCard.astro'
+import { fetchOne, Q } from '../lib/sanity'
+import { CATEGORIES, getArticles } from '../lib/column'
 
-const CATEGORIES = [
-  { value: 'all', label: '全部' },
-  { value: 'health', label: '身心健康' },
-  { value: 'art', label: '藝術陪伴' },
-  { value: 'eco', label: '生態永續' },
-  { value: 'travel', label: '慢旅共學' },
-  { value: 'other', label: '其他' },
-]
-const CAT_LABEL: Record<string, string> = Object.fromEntries(
-  CATEGORIES.filter((c) => c.value !== 'all').map((c) => [c.value, c.label]),
-)
-
-type Article = {
-  title: string
-  slug: string
-  excerpt?: string
-  category: string
-  series?: string
-  accent: 'sage' | 'earth' | 'sky'
-  publishedAt: string
-  tags?: string[]
-  cover?: { image: any; alt?: string }
-  author?: { name: string; title?: string; initial?: string; accent?: string }
-}
-
-const articles = await sanity.fetch<Article[]>(Q.articles)
-const ym = (d: string) => (d ? d.slice(0, 7).replace('-', '.') : '')
+type Page = { title: string; lead?: string; seoDescription?: string; emptyText?: any[] }
+const [articles, page] = await Promise.all([getArticles(), fetchOne<Page>(Q.columnPage, {}, '慢活專欄頁面')])
+// 篩選按鈕只列有文章的分類，避免點了是空的
+const used = CATEGORIES.filter((c) => articles.some((a) => a.category === c.value))
 ---
-<Base
-  title="慢活專欄"
-  description="由學會各領域會員執筆的慢活專欄——精油氣味、漢字文化、生態永續與慢旅共學，以文字分享慢活實踐的日常智慧。"
->
+<Base title={page.title} description={page.seoDescription}>
   <div class="page" id="page-column">
-    <div class="col-header">
-      <div class="col-header-inner">
-        <p class="sec-label">Column</p>
-        <h2 class="sec-title" style="margin-bottom:1rem">慢活專欄</h2>
-        <p style="font-size:1rem;line-height:2;color:var(--muted);max-width:600px;">由學會各領域會員執筆，以文字、圖文分享慢活實踐的日常智慧。每一篇文章，都是一個邀請——邀請你放慢腳步，重新與自己相遇。</p>
-        <div class="col-filter-bar">
-          {CATEGORIES.map((c, i) => (
-            <button class={`filter-btn${i === 0 ? ' active' : ''}`} data-filter={c.value} type="button">{c.label}</button>
+    <header class="page-head">
+      <div class="container">
+        <p class="crumbs"><a href="/">首頁</a> / {page.title}</p>
+        <h1>{page.title}</h1>
+        {page.lead && <p class="lead">{page.lead}</p>}
+      </div>
+    </header>
+
+    {used.length > 1 && (
+      <nav class="type-filter" id="list" aria-label="依分類篩選文章">
+        <div class="container type-filter-inner">
+          <span class="type-filter-label">依分類看文章</span>
+          <button type="button" class="type-btn is-on" data-type="" aria-pressed="true">全部</button>
+          {used.map((c) => (
+            <button type="button" class="type-btn" data-type={c.value} aria-pressed="false">{c.label}</button>
           ))}
         </div>
+      </nav>
+    )}
+
+    <section class="block block-alt" aria-label="文章列表">
+      <div class="container">
+        {articles.length > 0 ? (
+          <div class="grid-3" id="posts">{articles.map((a) => <ArticleCard article={a} />)}</div>
+        ) : null}
+        <div class="col-empty rich-links" id="colEmpty" hidden={articles.length > 0}>
+          {page.emptyText ? <PortableText value={page.emptyText} /> : <p>這個分類目前還沒有文章。</p>}
+        </div>
       </div>
-    </div>
-
-    <div class="articles-grid" id="articlesGrid">
-      {articles.map((a) => {
-        const src = imageUrl(a.cover?.image, 1200)
-        const d = imageDims(a.cover?.image)
-        return (
-          <div
-            class="article-card"
-            data-cat={a.category}
-            style={`grid-column:1/-1;border-top:3px solid var(--${a.accent});background:var(--${a.accent}-pale)`}
-          >
-            <div class="article-card-tags">
-              <div style="display:flex;gap:0.6rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
-                <span class={`article-cat cat-${a.category}`}>{CAT_LABEL[a.category] ?? '其他'}</span>
-                {a.series && (
-                  <span style={`font-size:0.82rem;letter-spacing:0.18em;color:var(--${a.accent});padding:0.2rem 0.7rem;border:1px solid var(--${a.accent}-light)`}>{a.series}</span>
-                )}
-              </div>
-            </div>
-
-            <h3 class="article-title" style="font-size:1.15rem">
-              <a href={`/column/${a.slug}`} style="color:inherit;text-decoration:none">{a.title}</a>
-            </h3>
-
-            {a.excerpt && <p class="article-excerpt">{a.excerpt}</p>}
-
-            {src && (
-              <div class="article-image">
-                <a href={`/column/${a.slug}`}>
-                  <img src={src} alt={a.cover?.alt || a.title} loading="lazy" decoding="async"
-                       width={d?.width} height={d?.height}
-                       style="width:100%;height:auto;display:block;border:1px solid var(--border)" />
-                </a>
-              </div>
-            )}
-
-            <a class={`read-more-btn read-more-${a.accent}`} href={`/column/${a.slug}`}>閱讀全文 →</a>
-
-            <div class="article-meta">
-              {a.author && (
-                <span class="article-author">
-                  <span class="author-avatar" style={`background:var(--${a.author.accent || a.accent})`}>
-                    {a.author.initial || a.author.name.slice(0, 1)}
-                  </span>
-                  {a.author.name}{a.author.title ? `・${a.author.title}` : ''}
-                </span>
-              )}
-              <span class="article-date">{ym(a.publishedAt)}</span>
-              {a.tags && a.tags.length > 0 && (
-                <div class="article-tags">
-                  {a.tags.map((t) => <span class="tag">{t}</span>)}
-                </div>
-              )}
-            </div>
-          </div>
-        )
-      })}
-    </div>
-    <p id="colEmpty" hidden style="padding:3rem 1.5rem;text-align:center;font-size:0.95rem;line-height:2;color:var(--muted);">
-      這個分類目前還沒有文章，歡迎<a href="/contact" style="color:var(--earth)">投稿分享</a>。
-    </p>
+    </section>
   </div>
 
-  <script is:inline>
-    (function () {
-      const btns = document.querySelectorAll('.filter-btn');
-      const cards = document.querySelectorAll('.article-card');
-      const empty = document.getElementById('colEmpty');
-      btns.forEach(function (b) {
-        b.addEventListener('click', function () {
-          const cat = b.dataset.filter;
-          btns.forEach(function (x) { x.classList.remove('active'); });
-          b.classList.add('active');
-          let shown = 0;
-          cards.forEach(function (c) {
-            c.hidden = !(cat === 'all' || c.dataset.cat === cat);
-            if (!c.hidden) shown++;
-          });
-          if (empty) empty.hidden = shown > 0;
-        });
-      });
-      // 首頁主題卡片會連到 /column?cat=health 這類網址，進來時直接套用該分類
-      const want = new URLSearchParams(location.search).get('cat');
-      const target = want && document.querySelector('.filter-btn[data-filter="' + want + '"]');
-      if (target) target.click();
-    })();
+  <script>
+    // 依分類篩選：按鈕或網址 ?cat=…（首頁主題、選單子項目會用這種網址連進來）
+    const btns = [...document.querySelectorAll<HTMLButtonElement>('.type-btn')]
+    const cards = [...document.querySelectorAll<HTMLElement>('#posts > [data-type]')]
+    const empty = document.getElementById('colEmpty')
+    function apply(cat: string) {
+      btns.forEach((b) => {
+        const on = b.dataset.type === cat
+        b.classList.toggle('is-on', on)
+        b.setAttribute('aria-pressed', String(on))
+      })
+      let shown = 0
+      cards.forEach((c) => {
+        c.hidden = !!cat && c.dataset.type !== cat
+        if (!c.hidden) shown++
+      })
+      if (empty) empty.hidden = shown > 0
+      const url = new URL(location.href)
+      if (cat) url.searchParams.set('cat', cat)
+      else url.searchParams.delete('cat')
+      history.replaceState(null, '', url)
+    }
+    btns.forEach((b) => b.addEventListener('click', () => apply(b.dataset.type ?? '')))
+    const want = new URLSearchParams(location.search).get('cat')
+    if (want) apply(want)
   </script>
 </Base>
+
+<style>
+  .col-empty { padding: 2rem 0; text-align: center; font-size: 1rem; line-height: 2; color: var(--ink-soft); }
+</style>

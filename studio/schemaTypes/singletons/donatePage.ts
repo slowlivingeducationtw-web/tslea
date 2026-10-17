@@ -2,12 +2,12 @@ import { defineField, defineType } from 'sanity'
 
 export const donatePage = defineType({
   name: 'donatePage',
-  title: '捐款支持',
+  title: '捐款資訊',
   type: 'document',
+  description: '顯示在「與我們合作」頁的「個人捐款」區塊（舊的 /donate 網址會自動轉到這裡）。',
   fields: [
-    defineField({ name: 'label', title: '英文小標', type: 'string', initialValue: 'Support Us' }),
-    defineField({ name: 'title', title: '頁面標題', type: 'string', initialValue: '捐款支持' }),
-    defineField({ name: 'intro', title: '頁面引言', type: 'text', rows: 3 }),
+    defineField({ name: 'title', title: '區塊標題', type: 'string', initialValue: '個人捐款' }),
+    defineField({ name: 'intro', title: '區塊引言', type: 'text', rows: 3 }),
     defineField({
       name: 'uses',
       title: '您的捐款用於',
@@ -52,5 +52,5 @@ export const donatePage = defineType({
       description: '每一行會以 ✦ 開頭顯示。',
     }),
   ],
-  preview: { prepare: () => ({ title: '捐款支持' }) },
+  preview: { prepare: () => ({ title: '捐款資訊' }) },
 })

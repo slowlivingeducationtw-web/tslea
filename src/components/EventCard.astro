@@ -1,42 +1,70 @@
 ---
-import { THEMES } from '../data/themes'
-import { phaseOf, PHASE_LABEL, type CmsEvent } from '../lib/events'
+// 活動卡片：整張可點進活動頁（/events/{slug}）；開放報名時另有「我要報名」按鈕直接到報名表。
+import { imageUrl } from '../lib/sanity'
+import { videoThumb } from '../lib/video'
+import { getActivityTypes, typeTone } from '../lib/site'
+import { badgeOf, type CmsEvent } from '../lib/events'
 
 type Props = { event: CmsEvent }
 const { event: e } = Astro.props
-const phase = phaseOf(e)
-// 分類標籤是三大主題之一時沿用主題色，其他（共學活動、慢活專欄…）用綠色
-const tone = THEMES.find((t) => t.title === e.tag)?.tone ?? 'leaf'
+const badge = badgeOf(e)
+// 標籤用後台選的「活動類別」；還沒選類別的舊資料才顯示舊的自由文字標籤
+const type = e.activityType
+const tone = typeTone(await getActivityTypes(), type?.slug)
+const label = type?.title || e.tag
+// 沒有照片時，有影片就用影片縮圖
+const cover = imageUrl(e.cover?.image, 900) ?? videoThumb(e.videoUrl)
+const isVideoThumb = !e.cover?.image && !!cover
+const more = badge?.kind === 'recap' ? '閱讀回顧' : '看活動內容'
 ---
-<article class={`card event-card phase-${phase}`}>
-  <div class={`event-band photo tone-${tone}`} aria-hidden="true">
-    <span>{e.icon}</span>
-  </div>
+<article class={`card event-card badge-${badge?.kind ?? 'none'}`} data-type={type?.slug ?? ''}>
+  {cover ? (
+    <div class="event-cover-wrap">
+      <img class="event-cover" src={cover} alt={e.cover?.alt || ''} loading="lazy" decoding="async" />
+      {isVideoThumb && <span class="event-play" aria-hidden="true">▶ 影片</span>}
+    </div>
+  ) : (
+    <div class={`event-band photo tone-${tone}`} aria-hidden="true"><span>{e.icon}</span></div>
+  )}
   <div class="card-body">
     <div class="event-top">
-      <span class={`event-phase phase-${phase}`}>{PHASE_LABEL[phase]}</span>
-      {e.tag && <span class={`chip tone-${tone}`}>{e.tag}</span>}
+      {badge && <span class={`signup signup-${badge.kind}`}>{badge.label}</span>}
+      {label && <span class={`chip tone-${tone}`}>{label}</span>}
     </div>
-    <p class="event-date">{e.dateLabel}</p>
-    <h3 class="card-title">{e.title}</h3>
+    <p class="event-date">{e.dateLabel}{e.place ? `・${e.place}` : ''}</p>
+    <h3 class="card-title"><a class="event-link" href={`/events/${e.slug}`}>{e.title}</a></h3>
     {e.description && <p class="card-text">{e.description}</p>}
+    <div class="card-foot event-foot">
+      {badge?.kind === 'open' && e.signupUrl && (
+        <a class="btn btn-solid btn-sm signup-btn" href={e.signupUrl} target="_blank" rel="noopener">
+          我要報名 →<span class="sr-only">（{e.title}，另開新視窗）</span>
+        </a>
+      )}
+      <span class="card-more" aria-hidden="true">{more} →</span>
+    </div>
   </div>
 </article>
 
 <style>
-  .event-card:hover { transform: none; box-shadow: var(--shadow); }
+  .event-card { position: relative; }
+  .event-card:hover { box-shadow: var(--shadow-hover); }
+  .event-card:hover .card-title { color: var(--forest); }
+  /* 標題連結延伸成整張卡片可點；報名按鈕疊在上面，可以單獨點 */
+  .event-link { color: inherit; text-decoration: none; }
+  .event-link::after { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+  .event-link:focus-visible { outline: none; }
+  .event-link:focus-visible::after { outline: 2px solid var(--forest); outline-offset: 2px; }
+  .signup-btn { position: relative; z-index: 2; }
+  .event-cover { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
+  .event-cover-wrap { position: relative; }
+  .event-play { position: absolute; left: 0.8rem; bottom: 0.8rem; padding: 0.25rem 0.7rem; border-radius: 999px; background: rgba(0, 0, 0, 0.62); color: #fff; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; }
   .event-band { height: 112px; display: flex; align-items: center; justify-content: center; font-size: 2.6rem; }
   .event-top { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
-  .event-phase {
-    font-size: 0.82rem; font-weight: 600; letter-spacing: 0.06em;
-    padding: 0.2rem 0.7rem; border-radius: 999px;
-  }
-  .event-phase.phase-current { background: var(--forest); color: #fff; }
-  .event-phase.phase-past { background: var(--paper); color: var(--ink-soft); border: 1px solid var(--line); }
+  .event-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem; }
   /* global.css 舊版也有 .event-date（英文斜體），這裡明確改回中文字體 */
   .event-date {
     font-family: 'Noto Sans TC', sans-serif; font-style: normal; margin: 0;
     font-size: 0.95rem; color: var(--forest); letter-spacing: 0.08em; font-weight: 600;
   }
-  .phase-past .event-band { filter: saturate(0.4); }
+  .badge-ended .event-band, .badge-ended .event-cover { filter: saturate(0.5); }
 </style>

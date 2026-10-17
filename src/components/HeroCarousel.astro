@@ -14,6 +14,8 @@ export type HeroSlide = {
   tone: 'forest' | 'mist' | 'clay' | 'leaf'
   image: string | null
   imageAlt: string
+  /** 背景影片（YouTube 片段，靜音循環）；載入前與「減少動態」時顯示 image 或影片縮圖 */
+  video?: { id: string; start: number; end?: number }
 }
 
 type Props = { slides: HeroSlide[]; interval?: number }
@@ -24,8 +26,13 @@ const { slides, interval = 6000 } = Astro.props
     <div class={`hero-slide tone-${s.tone}${i === 0 ? ' is-active' : ''}`}
          role="group" aria-roledescription="slide" aria-label={`第 ${i + 1} 頁，共 ${slides.length} 頁`}
          aria-hidden={i === 0 ? undefined : 'true'}>
-      <Photo src={s.image} alt={s.imageAlt} tone={s.tone === 'forest' ? 'forest' : s.tone}
-             icon="🌳" placeholder={`照片待補：${s.imageAlt}`} class="hero-c-media" eager={i === 0} />
+      <Photo src={s.image ?? (s.video ? `https://i.ytimg.com/vi/${s.video.id}/maxresdefault.jpg` : null)}
+             alt={s.imageAlt} tone={s.tone === 'forest' ? 'forest' : s.tone}
+             icon="🌳" placeholder="照片待補" class="hero-c-media" eager={i === 0} />
+      {s.video && (
+        <div class="hero-video" aria-hidden="true"
+             data-yt={s.video.id} data-start={s.video.start} data-end={s.video.end ?? ''}></div>
+      )}
       <div class="hero-c-shade" aria-hidden="true"></div>
       <div class="container hero-c-inner">
         {s.pre && <p class="hero-c-pre">{s.pre}</p>}
@@ -66,6 +73,59 @@ const { slides, interval = 6000 } = Astro.props
     let hover = false
     let timer: number | undefined
 
+    // ── 背景影片：輪到那一頁才載入 YouTube（靜音、循環指定片段）；減少動態或省流量模式不載入 ──
+    const saveData = (navigator as any).connection?.saveData === true
+    const canVideo = !reduce && !saveData
+    type Vid = { box: HTMLElement; frame?: HTMLIFrameElement; start: number; end: number }
+    const vids = new Map<HTMLElement, Vid>()
+    slides.forEach((s) => {
+      const box = s.querySelector<HTMLElement>('.hero-video')
+      if (box) vids.set(s, { box, start: Number(box.dataset.start) || 0, end: Number(box.dataset.end) || 0 })
+    })
+    // 播放器會回報目前秒數；快到片段結尾就跳回開頭（YouTube 的 loop 不支援指定片段，end 參數又會停在結束畫面）
+    window.addEventListener('message', (ev) => {
+      if (!/youtube(-nocookie)?\.com$/.test(new URL(ev.origin).hostname)) return
+      let data: any
+      try { data = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data } catch { return }
+      const t = data?.info?.currentTime
+      if (typeof t !== 'number') return
+      vids.forEach((v) => {
+        if (v.frame?.contentWindow !== ev.source) return
+        if (v.end > v.start && t >= v.end - 0.4) { cmd(v, 'seekTo', [v.start, true]); cmd(v, 'playVideo') }
+        if (t >= v.start && t < v.end) v.box.classList.add('is-playing')
+      })
+    })
+    const cmd = (v: Vid, func: string, args: unknown[] = []) =>
+      v.frame?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args }), '*')
+    let playVideo = function (s: HTMLElement) {
+      const v = vids.get(s)
+      if (!v || !canVideo) return
+      if (!v.frame) {
+        const p = new URLSearchParams({
+          autoplay: '1', mute: '1', controls: '0', playsinline: '1', rel: '0', disablekb: '1',
+          iv_load_policy: '3', modestbranding: '1', enablejsapi: '1', start: String(v.start),
+          origin: location.origin,
+        })
+        const f = document.createElement('iframe')
+        f.src = `https://www.youtube-nocookie.com/embed/${v.box.dataset.yt}?${p}`
+        f.title = '背景影片'
+        f.tabIndex = -1
+        f.allow = 'autoplay; encrypted-media'
+        // 開始接收播放秒數；真的播到片段裡才淡入，避免先看到黑畫面與 YouTube 介面
+        f.addEventListener('load', () => f.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'))
+        v.box.appendChild(f)
+        v.frame = f
+      } else {
+        cmd(v, 'playVideo')
+      }
+    }
+    function pauseVideos(except?: HTMLElement) {
+      vids.forEach((v, s) => {
+        if (s === except) return
+        cmd(v, 'pauseVideo')
+      })
+    }
+
     function show(n: number) {
       current = (n + slides.length) % slides.length
       slides.forEach((s, i) => {
@@ -74,15 +134,23 @@ const { slides, interval = 6000 } = Astro.props
         if (on) s.removeAttribute('aria-hidden')
         else s.setAttribute('aria-hidden', 'true')
       })
+      pauseVideos(slides[current])
+      if (!userPaused) playVideo(slides[current])
       dots.forEach((d, i) => (i === current ? d.setAttribute('aria-current', 'true') : d.removeAttribute('aria-current')))
     }
     function schedule() {
       window.clearTimeout(timer)
       if (userPaused || hover || document.hidden) return
-      timer = window.setTimeout(() => { show(current + 1); schedule() }, interval)
+      // 有背景影片的那一頁，停留到片段播完（最多 25 秒）
+      const v = canVideo ? vids.get(slides[current]) : undefined
+      const wait = v && v.end > v.start ? Math.min(Math.max(interval, (v.end - v.start) * 1000), 25000) : interval
+      timer = window.setTimeout(() => { show(current + 1); schedule() }, wait)
     }
     function setPaused(p: boolean) {
       userPaused = p
+      // 按暫停時背景影片也停；繼續時再播
+      if (p) pauseVideos()
+      else playVideo(slides[current])
       if (pauseBtn) {
         pauseBtn.dataset.state = p ? 'paused' : 'playing'
         pauseBtn.setAttribute('aria-label', p ? '繼續輪播' : '暫停輪播')
@@ -98,6 +166,15 @@ const { slides, interval = 6000 } = Astro.props
     root.addEventListener('focusout', () => { hover = false; schedule() })
     document.addEventListener('visibilitychange', schedule)
 
+    // 第一頁的背景影片等整頁載入完再開始，先看到照片，首頁不會因為影片變慢
+    let ready = document.readyState === 'complete'
+    const origPlay = playVideo
+    playVideo = (s: HTMLElement) => { if (ready) origPlay(s) }
+    if (!ready) window.addEventListener('load', () => window.setTimeout(() => {
+      ready = true
+      if (!userPaused && !document.hidden) origPlay(slides[current])
+    }, 600), { once: true })
+
     setPaused(userPaused)
   })
 </script>
@@ -110,6 +187,18 @@ const { slides, interval = 6000 } = Astro.props
   }
   .hero-slide.is-active { opacity: 1; visibility: visible; position: relative; min-height: inherit; }
   .hero-slide :global(.hero-c-media) { position: absolute; inset: 0; }
+  /* 背景影片：蓋滿整個主視覺（16:9 依容器比例放大裁切），稍微放大藏住 YouTube 邊角介面 */
+  .hero-video { position: absolute; inset: 0; overflow: hidden; container-type: size; opacity: 0; transition: opacity 1.2s ease; pointer-events: none; }
+  .hero-video.is-playing { opacity: 1; }
+  .hero-video :global(iframe) {
+    position: absolute; top: 50%; left: 50%; border: 0;
+    width: max(100cqw, calc(100cqh * 16 / 9)); height: max(100cqh, calc(100cqw * 9 / 16));
+    transform: translate(-50%, -50%) scale(1.18);
+  }
+  /* 直式畫面會看到影片全高，影片底部的字幕會跑出來：放大一點並往下移，把字幕裁掉 */
+  @media (max-width: 900px) {
+    .hero-video :global(iframe) { transform: translate(-50%, -50%) scale(1.4) translateY(3%); }
+  }
   .hero-slide :global(.hero-c-media .photo-ph) { justify-content: flex-end; align-items: flex-end; padding: 1.2rem 1.5rem 4.5rem; }
   .hero-slide.tone-mist :global(.hero-c-media) { background: linear-gradient(140deg, #6A8794, var(--slate)); }
   .hero-slide.tone-clay :global(.hero-c-media) { background: linear-gradient(140deg, #A9774F, var(--clay-deep)); }

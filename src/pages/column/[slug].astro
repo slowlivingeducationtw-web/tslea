@@ -1,15 +1,16 @@
 ---
+// 專欄文章頁：/column/{slug}，內容在後台「內容 → 專欄文章」。
+// 版面與活動頁一致：電腦版左側依分類列出所有文章，手機版改看頁尾「其他文章」。
 import Base from '../../layouts/Base.astro'
 import PortableText from '../../components/PortableText.astro'
+import ArticleCard from '../../components/ArticleCard.astro'
+import SideList, { type SideGroup } from '../../components/SideList.astro'
 import { sanity, Q, imageUrl, imageDims } from '../../lib/sanity'
+import { CATEGORIES, categoryOf, dateText, getArticles } from '../../lib/column'
 
 export async function getStaticPaths() {
   const slugs = await sanity.fetch<string[]>(Q.articleSlugs)
   return slugs.map((slug) => ({ params: { slug } }))
-}
-
-const CAT_LABEL: Record<string, string> = {
-  health: '身心健康', art: '藝術陪伴', eco: '生態永續', travel: '慢旅共學', other: '其他',
 }
 
 const { slug } = Astro.params
@@ -17,8 +18,28 @@ const a = await sanity.fetch(Q.article, { slug })
 if (!a) throw new Error(`Sanity 找不到 slug 為 "${slug}" 的文章`)
 
 const site = 'https://slowlivingeducation.org'
-const cover = imageUrl(a.cover?.image, 1200)
+const cover = imageUrl(a.cover?.image, 1600)
 const coverDims = imageDims(a.cover?.image)
+const cat = categoryOf(a.category)
+const all = await getArticles()
+
+// 左側列表：依分類分組（新的在前），每組最多 8 篇，目前這篇一定列出
+const SIDE_MAX = 8
+const side: SideGroup[] = CATEGORIES.map((c) => {
+  const items = all.filter((x) => x.category === c.value)
+  const shown = items.slice(0, SIDE_MAX)
+  const self = items.find((x) => x.slug === a.slug)
+  if (self && !shown.includes(self)) shown.push(self)
+  return {
+    title: c.label,
+    items: shown.map((x) => ({ href: `/column/${x.slug}`, title: x.title, meta: dateText(x.publishedAt), current: x.slug === a.slug })),
+    moreHref: items.length > shown.length ? `/column?cat=${c.value}` : undefined,
+  }
+}).filter((g) => g.items.length > 0)
+
+// 手機版頁尾「其他文章」：同分類優先，最多三篇
+const others = all.filter((x) => x.slug !== a.slug)
+const more = [...others.filter((x) => x.category === a.category), ...others.filter((x) => x.category !== a.category)].slice(0, 3)
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -39,68 +60,84 @@ const jsonLd = {
   keywords: (a.tags || []).join('、'),
 }
 ---
-<Base
-  title={a.title}
-  description={a.excerpt}
-  ogImage={cover ? cover.replace(site, '') : undefined}
-  jsonLd={jsonLd}
->
+<Base title={a.title} description={a.excerpt} ogImage={cover} jsonLd={jsonLd}>
   <div class="page" id="page-article" data-cat={a.category}>
-    <div class="article-page-bar">
-      <a class="article-back-btn" href="/column">
-        <span class="article-back-arrow">←</span> 返回專欄
-      </a>
+    <div class="container detail-layout">
+      <SideList heading="慢活專欄" headingHref="/column" label="所有文章" groups={side} />
+
+      <div>
+        <header class="detail-head">
+          <div class="detail-narrow">
+            <p class="crumbs"><a href="/">首頁</a> / <a href="/column">慢活專欄</a> / {a.title}</p>
+            <p class="detail-badges">
+              <a class={`chip tone-${cat.tone}`} href={`/column?cat=${cat.value}`}>{cat.label}</a>
+              {a.series && <span class="art-series">{a.series}</span>}
+            </p>
+            <h1>{a.title}</h1>
+            <dl class="detail-facts">
+              {a.author && <div><dt>作者</dt><dd>{a.author.name}</dd></div>}
+              <div><dt>日期</dt><dd>{dateText(a.publishedAt)}</dd></div>
+            </dl>
+          </div>
+        </header>
+
+        <article class="detail-narrow">
+          {cover && (
+            <figure class="detail-cover">
+              <img src={cover} alt={a.cover?.alt || a.title} width={coverDims?.width} height={coverDims?.height}
+                   loading="eager" decoding="async" />
+              {a.cover?.caption && <figcaption>{a.cover.caption}</figcaption>}
+            </figure>
+          )}
+
+          <div class="detail-text rich-links"><PortableText value={a.body} /></div>
+
+          {a.tags?.length > 0 && (
+            <ul class="art-tags" aria-label="標籤">{a.tags.map((t: string) => <li>#{t}</li>)}</ul>
+          )}
+
+          {a.links?.length > 0 && (
+            <ul class="detail-links">
+              {a.links.map((l: any) => <li><a class="text-link" href={l.url} target="_blank" rel="noopener">{l.title} →</a></li>)}
+            </ul>
+          )}
+
+          {a.author && (
+            <aside class="art-author" aria-label="關於作者">
+              <span class={`art-avatar tone-${cat.tone}`} aria-hidden="true">{a.author.initial || a.author.name.slice(0, 1)}</span>
+              <div>
+                <p class="art-author-name">{a.author.name}</p>
+                {a.author.title && <p class="art-author-title">{a.author.title}</p>}
+              </div>
+            </aside>
+          )}
+        </article>
+      </div>
     </div>
 
-    <article class="article-page-content">
-      <div class="article-card-tags">
-        <div style="display:flex;gap:0.6rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
-          <span class={`article-cat cat-${a.category}`}>{CAT_LABEL[a.category] ?? '其他'}</span>
-          {a.series && (
-            <span style={`font-size:0.82rem;letter-spacing:0.18em;color:var(--${a.accent});padding:0.2rem 0.7rem;border:1px solid var(--${a.accent}-light)`}>{a.series}</span>
-          )}
-        </div>
-      </div>
-
-      <h1 class="article-title" style="font-size:1.15rem">{a.title}</h1>
-
-      {cover && (
-        <div class="article-image">
-          <img src={cover} alt={a.cover?.alt || a.title} loading="eager" decoding="async"
-               width={coverDims?.width} height={coverDims?.height}
-               style="width:100%;height:auto;display:block;border:1px solid var(--border)" />
-        </div>
-      )}
-
-      <div style="width:100%;height:1px;background:var(--border);margin:1.5rem 0"></div>
-
-      <PortableText value={a.body} />
-
-      {a.links && a.links.length > 0 && (
-        <div style="margin-top:1.5rem;padding-top:1.2rem;border-top:1px solid var(--border)">
-          {a.links.map((l: any) => (
-            <a href={l.url} target="_blank" rel="noopener"
-               style={`display:inline-block;margin-right:1.2rem;font-size:0.9rem;color:var(--${a.accent});letter-spacing:0.12em;text-decoration:none;border-bottom:1px solid var(--${a.accent}-light);padding-bottom:1px`}>{l.title} →</a>
-          ))}
-        </div>
-      )}
-
-      <div class="article-meta">
-        {a.author && (
-          <span class="article-author">
-            <span class="author-avatar" style={`background:var(--${a.author.accent || a.accent})`}>
-              {a.author.initial || a.author.name.slice(0, 1)}
-            </span>
-            {a.author.name}{a.author.title ? `・${a.author.title}` : ''}
-          </span>
-        )}
-        <span class="article-date">{a.publishedAt?.slice(0, 7).replace('-', '.')}</span>
-        {a.tags && a.tags.length > 0 && (
-          <div class="article-tags">
-            {a.tags.map((t: string) => <span class="tag">{t}</span>)}
+    {more.length > 0 && (
+      <section class="block block-alt detail-more" aria-labelledby="more-title">
+        <div class="container">
+          <div class="block-head">
+            <h2 id="more-title" class="block-title">其他文章</h2>
+            <a class="text-link" href="/column">看所有文章 →</a>
           </div>
-        )}
-      </div>
-    </article>
+          <div class="grid-3">{more.map((x) => <ArticleCard article={x} />)}</div>
+        </div>
+      </section>
+    )}
   </div>
 </Base>
+
+<style>
+  .art-series { font-size: 0.88rem; color: var(--ink-soft); letter-spacing: 0.06em; }
+  .art-tags { list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; margin-top: 2rem; font-size: 0.9rem; color: var(--ink-soft); }
+  .art-author { display: flex; gap: 1rem; align-items: center; margin-top: 2.4rem; padding: 1.2rem 1.4rem; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); }
+  .art-avatar { flex: none; width: 52px; height: 52px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; color: var(--ink); }
+  .art-avatar.tone-mist { background: var(--mist); }
+  .art-avatar.tone-clay { background: var(--clay); }
+  .art-avatar.tone-leaf { background: var(--forest-pale); }
+  .art-avatar.tone-forest { background: var(--forest); color: #fff; }
+  .art-author-name { font-weight: 700; color: var(--ink); }
+  .art-author-title { margin-top: 0.15rem; font-size: 0.92rem; color: var(--ink-soft); line-height: 1.7; }
+</style>

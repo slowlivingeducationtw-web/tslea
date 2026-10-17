@@ -1,0 +1,44 @@
+---
+// 內容頁（活動、專欄文章）電腦版的左側列表：分組列出同類的所有頁面，目前這頁加亮。
+// 外層要放在 .detail-layout 裡；手機版會自動收起（改看頁尾的卡片）。
+export type SideItem = { href: string; title: string; meta?: string; current?: boolean }
+export type SideGroup = { title: string; items: SideItem[]; moreHref?: string }
+type Props = { heading: string; headingHref: string; groups: SideGroup[]; label: string }
+const { heading, headingHref, groups, label } = Astro.props
+---
+<aside class="side" aria-label={label}>
+  <p class="side-h"><a href={headingHref}>{heading}</a></p>
+  {groups.map((g) => (
+    <nav aria-label={g.title}>
+      <h2 class="side-group">{g.title}</h2>
+      <ul class="side-list">
+        {g.items.map((x) => (
+          <li>
+            <a href={x.href} aria-current={x.current ? 'page' : undefined}>
+              <span class="side-title">{x.title}</span>
+              {x.meta && <span class="side-meta">{x.meta}</span>}
+            </a>
+          </li>
+        ))}
+      </ul>
+      {g.moreHref && <a class="side-more" href={g.moreHref}>看全部 →</a>}
+    </nav>
+  ))}
+</aside>
+
+<style>
+  .side { position: sticky; top: calc(64px + 1.5rem); max-height: calc(100vh - 64px - 3rem); overflow-y: auto; padding-right: 0.4rem; }
+  .side-h { font-size: 1.15rem; font-weight: 700; letter-spacing: 0.12em; margin-bottom: 1rem; }
+  .side-h a { color: var(--ink); text-decoration: none; }
+  .side-group { font-size: 0.88rem; font-weight: 600; color: var(--ink-soft); letter-spacing: 0.1em; margin: 1.4rem 0 0.5rem; }
+  .side-list { list-style: none; border-left: 2px solid var(--line); }
+  .side-list a { display: block; padding: 0.55rem 0 0.55rem 1rem; margin-left: -2px; border-left: 3px solid transparent; color: var(--ink); text-decoration: none; }
+  .side-list a:hover .side-title { color: var(--forest); }
+  .side-list a[aria-current='page'] { border-left-color: var(--forest); background: var(--forest-pale); border-radius: 0 8px 8px 0; }
+  .side-list a[aria-current='page'] .side-title { color: var(--forest-deep); font-weight: 700; }
+  .side-list a:focus-visible { outline: 2px solid var(--forest); outline-offset: 2px; }
+  .side-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.98rem; line-height: 1.55; }
+  .side-meta { display: block; margin-top: 0.15rem; font-size: 0.82rem; color: var(--ink-soft); letter-spacing: 0.04em; }
+  .side-more { display: inline-block; margin: 0.5rem 0 0 1rem; font-size: 0.9rem; color: var(--forest); font-weight: 600; text-decoration: none; }
+  @media (max-width: 900px) { .side { display: none; } }
+</style>

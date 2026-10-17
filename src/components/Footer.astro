@@ -1,5 +1,10 @@
 ---
-import { CONTACT, FOOTER_GROUPS } from '../data/site'
+import { getNavigation, getSettings, isExternal } from '../lib/site'
+
+// 連結分組在後台「選單與頁尾」，地址、粉專、立案字號在「網站設定」
+const [nav, s] = await Promise.all([getNavigation(), getSettings()])
+const ext = (href: string) => (isExternal(href) ? { target: '_blank', rel: 'noopener' } : {})
+const legal = [s.registrationNo && `立案字號：${s.registrationNo}`, s.taxId && `統一編號：${s.taxId}`].filter(Boolean)
 ---
 <footer class="site-footer">
   <div class="container">
@@ -7,33 +12,28 @@ import { CONTACT, FOOTER_GROUPS } from '../data/site'
       <div class="footer-brand">
         <img class="footer-logo" src="/images/logo-light.png" width="880" height="197"
              alt="臺灣慢活教育學會 Slow Living Education Society of Taiwan">
-        <a class="btn btn-outline on-dark btn-sm" href={CONTACT.facebook} target="_blank" rel="noopener">
-          在 Facebook 保持關注<span class="sr-only">（另開新視窗）</span>
-        </a>
-        <p class="footer-addr">{CONTACT.address}</p>
+        {s.facebook && (
+          <a class="btn btn-outline on-dark btn-sm" href={s.facebook} target="_blank" rel="noopener">
+            {nav.facebookLabel || 'Facebook 粉絲專頁'}<span class="sr-only">（另開新視窗）</span>
+          </a>
+        )}
+        {s.address && <p class="footer-addr">{s.address}</p>}
       </div>
 
-      {FOOTER_GROUPS.map((g) => (
+      {(nav.footerGroups ?? []).map((g) => (
         <nav aria-label={g.title}>
           <h2 class="footer-h">{g.title}</h2>
           <ul class="footer-links">
-            {g.links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+            {(g.links ?? []).map((l) => <li><a href={l.href} {...ext(l.href)}>{l.label}</a></li>)}
           </ul>
         </nav>
       ))}
-
-      <div>
-        <h2 class="footer-h">聯絡我們</h2>
-        <ul class="footer-links">
-          <li><a href="/contact">聯絡方式</a></li>
-          <li><a href={`mailto:${CONTACT.email}`}>來信給我們</a></li>
-          <li><a href="/board-area">理監事專區</a></li>
-        </ul>
-      </div>
     </div>
 
     <p class="footer-bottom">
-      © 2026 臺灣慢活教育學會 Slow Living Education Society of Taiwan · 非營利公益社會團體
+      © {new Date().getFullYear()} {s.orgName || '臺灣慢活教育學會'} Slow Living Education Society of Taiwan
+      {s.footerNote && <> · {s.footerNote}</>}
+      {legal.length > 0 && <><br>{legal.join('　')}</>}
     </p>
   </div>
 </footer>

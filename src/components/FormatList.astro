@@ -1,29 +1,50 @@
 ---
-import { FORMATS } from '../data/formats'
+import { imageUrl } from '../lib/sanity'
+import type { ActivityType } from '../lib/site'
+
+// 學會活動類別（後台「內容 → 學會活動類別」）；有圖示圖片用圖片，沒有用 emoji。
+// 每一類都連到活動頁的篩選結果（/events?type=…）。
+type Props = { formats: ActivityType[] }
+const { formats } = Astro.props
 ---
-<ul class="format-list">
-  {FORMATS.map((f) => (
+<ul class="format-list" style={`--cols:${Math.min(formats.length, 5)}`}>
+  {formats.map((f) => (
     <li class="format-item">
-      <span class="format-icon" aria-hidden="true">{f.icon}</span>
-      <div>
+      <a class="format-link" href={`/events?type=${f.slug}#list`} data-type={f.slug}>
+        {f.image?.asset ? (
+          <img class="format-img" src={imageUrl(f.image, 360)} alt="" width="180" height="180" loading="lazy" decoding="async" />
+        ) : (
+          <span class="format-icon" aria-hidden="true">{f.icon}</span>
+        )}
         <h3 class="format-title">{f.title}</h3>
-        <p class="format-desc">{f.description}</p>
-      </div>
+      </a>
+      {f.description && <p class="format-desc">{f.description}</p>}
     </li>
   ))}
 </ul>
 
 <style>
-  .format-list {
-    list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2rem 1.75rem;
-  }
-  .format-item { display: flex; flex-direction: column; gap: 0.9rem; }
+  /* 用 flex 讓最後一排不滿時置中（例：5 項排成 3＋2） */
+  .format-list { --gap: 1.75rem; list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 2.6rem var(--gap); }
+  .format-item { flex: 0 1 calc((100% - var(--gap) * (var(--cols, 4) - 1)) / var(--cols, 4)); display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .format-link { display: flex; flex-direction: column; align-items: center; color: inherit; text-decoration: none; }
+  .format-link:hover .format-title, .format-link:focus-visible .format-title { color: var(--forest); }
+  .format-link:hover .format-img { transform: scale(1.04); }
+  .format-link:focus-visible { outline: 2px solid var(--forest); outline-offset: 6px; border-radius: 12px; }
+  .format-img { transition: transform 0.25s; width: clamp(130px, 11vw, 180px); height: auto; aspect-ratio: 1; object-fit: contain; }
   .format-icon {
-    width: 56px; height: 56px; border-radius: 50%; background: var(--forest-pale);
-    display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem;
+    width: 96px; height: 96px; border-radius: 50%; background: var(--forest-pale);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 2.6rem;
   }
-  .format-title { font-size: 1.2rem; font-weight: 600; color: var(--ink); letter-spacing: 0.06em; }
-  .format-desc { font-size: 1rem; color: var(--ink-soft); line-height: 1.9; margin-top: 0.5rem; }
-  @media (max-width: 1000px) { .format-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (max-width: 560px) { .format-list { grid-template-columns: minmax(0, 1fr); } }
+  .format-title { margin-top: 1.1rem; font-size: 1.3rem; font-weight: 700; color: var(--ink); letter-spacing: 0.1em; }
+  /* 標題下的短線，呼應插畫的手繪感 */
+  .format-title::after {
+    content: ''; display: block; width: 2.4em; height: 3px; border-radius: 3px; margin: 0.55rem auto 0;
+    background: var(--clay-deep); opacity: 0.55;
+  }
+  .format-desc { font-size: 1rem; color: var(--ink-soft); line-height: 1.95; margin-top: 0.9rem; max-width: 19em; }
+  /* 項目數決定欄數（最多 5 欄），畫面窄時改 3 欄、2 欄、1 欄 */
+  @media (max-width: 1200px) { .format-item { flex-basis: calc((100% - var(--gap) * 2) / 3); } }
+  @media (max-width: 1000px) { .format-item { flex-basis: calc((100% - var(--gap)) / 2); } }
+  @media (max-width: 560px) { .format-item { flex-basis: 100%; } }
 </style>

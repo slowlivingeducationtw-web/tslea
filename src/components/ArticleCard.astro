@@ -1,0 +1,43 @@
+---
+// 專欄文章卡片：和活動卡片同樣的版型，整張可點進文章頁（/column/{slug}）。
+import { imageUrl } from '../lib/sanity'
+import { categoryOf, dateText, type Article } from '../lib/column'
+
+type Props = { article: Article }
+const { article: a } = Astro.props
+const cat = categoryOf(a.category)
+const cover = imageUrl(a.cover?.image, 900)
+---
+<article class="card post-card" data-type={a.category}>
+  {cover ? (
+    <img class="post-cover" src={cover} alt={a.cover?.alt || ''} loading="lazy" decoding="async" />
+  ) : (
+    <div class={`post-band photo tone-${cat.tone}`} aria-hidden="true"><span>{cat.icon}</span></div>
+  )}
+  <div class="card-body">
+    <div class="post-top">
+      <span class={`chip tone-${cat.tone}`}>{cat.label}</span>
+      {a.series && <span class="post-series">{a.series}</span>}
+    </div>
+    <p class="post-date">{dateText(a.publishedAt)}{a.author ? `・${a.author.name}` : ''}</p>
+    <h3 class="card-title"><a class="post-link" href={`/column/${a.slug}`}>{a.title}</a></h3>
+    {a.excerpt && <p class="card-text">{a.excerpt}</p>}
+    <div class="card-foot"><span class="card-more" aria-hidden="true">閱讀全文 →</span></div>
+  </div>
+</article>
+
+<style>
+  .post-card { position: relative; }
+  .post-card:hover { box-shadow: var(--shadow-hover); }
+  .post-card:hover .card-title { color: var(--forest); }
+  /* 標題連結延伸成整張卡片可點 */
+  .post-link { color: inherit; text-decoration: none; }
+  .post-link::after { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+  .post-link:focus-visible { outline: none; }
+  .post-link:focus-visible::after { outline: 2px solid var(--forest); outline-offset: 2px; }
+  .post-cover { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
+  .post-band { height: 112px; display: flex; align-items: center; justify-content: center; font-size: 2.6rem; }
+  .post-top { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  .post-series { font-size: 0.85rem; color: var(--ink-soft); letter-spacing: 0.06em; }
+  .post-date { margin: 0; font-size: 0.95rem; color: var(--forest); letter-spacing: 0.08em; font-weight: 600; }
+</style>

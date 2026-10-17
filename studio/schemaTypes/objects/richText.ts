@@ -47,5 +47,6 @@ export const richText = defineType({
     defineArrayMember({ type: 'verse' }),
     defineArrayMember({ type: 'figure' }),
     defineArrayMember({ type: 'imageRow' }),
+    defineArrayMember({ type: 'videoEmbed' }),
   ],
 })

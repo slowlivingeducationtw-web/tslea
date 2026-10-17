@@ -19,7 +19,9 @@ export const sanity = createClient({
   apiVersion: '2026-01-01',
   useCdn: false, // 建置時要拿最新內容，不要快取
   token,
-  perspective: 'published', // 只取已發布的，草稿不會出現在網站上
+  // 只取已發布的，草稿不會出現在網站上。
+  // 本機想先看後台草稿的效果時：SANITY_PREVIEW_DRAFTS=1 npm run build（Cloudflare 上不要設）
+  perspective: import.meta.env.SANITY_PREVIEW_DRAFTS === '1' ? 'drafts' : 'published',
 })
 
 const builder = createImageUrlBuilder(sanity)
@@ -30,6 +32,12 @@ export function imageUrl(source: any, width?: number) {
   let img = builder.image(source).auto('format')
   if (width) img = img.width(width)
   return img.url()
+}
+
+/** 分享圖（LINE、Facebook）：裁成 1200 × 630，會依後台設定的重點位置裁切。 */
+export function shareImageUrl(source: any) {
+  if (!source?.asset) return undefined
+  return builder.image(source).width(1200).height(630).fit('crop').format('jpg').url()
 }
 
 /** 取得圖片原始尺寸，用來填 width/height 避免版面跳動。 */
@@ -56,11 +64,50 @@ const RICH = `[]{
 export const Q = {
   siteSettings: `*[_type == "siteSettings"][0]`,
 
-  home: `*[_type == "homePage"][0]{ ..., aboutBody${RICH} }`,
+  navigation: `*[_id == "navigation"][0]`,
 
-  themes: `*[_type == "themesSection"][0]`,
+  home: `*[_id == "homePage"][0]{
+    heroSlides, statement, statementHighlight, eventsTitle, eventsSub,
+    tilesTitle, tiles, ctaTitle, ctaText, ctaButtons, seoTitle, seoDescription
+  }`,
 
-  events: `*[_type == "event"] | order(sortDate asc)`,
+  themes: `*[_id == "themesSection"][0]{ title, themes, formatsTitle }`,
+
+  aboutPage: `*[_id == "aboutPage"][0]{ ..., body${RICH} }`,
+
+  joinPage: `*[_id == "joinPage"][0]`,
+
+  partnerPage: `*[_id == "partnerPage"][0]`,
+
+  eventsPage: `*[_id == "eventsPage"][0]`,
+
+  columnPage: `*[_id == "columnPage"][0]`,
+
+  // 活動列表與卡片（一個活動一頁；hasRecap＝已補上活動回顧）
+  events: `*[_type == "event" && defined(slug.current)] | order(sortDate asc){
+    title, "slug": slug.current, dateLabel, sortDate, place, icon, description,
+    signupStatus, signupUrl, tag,
+    "cover": cover${FIGURE},
+    "videoUrl": video.url,
+    "hasRecap": count(recap) > 0 || defined(video.url),
+    "activityType": activityType->{ title, "slug": slug.current }
+  }`,
+
+  event: `*[_type == "event" && slug.current == $slug][0]{
+    title, "slug": slug.current, dateLabel, sortDate, place, icon, description,
+    signupStatus, signupUrl, tag,
+    "cover": cover${FIGURE},
+    intro${RICH},
+    recap${RICH},
+    video,
+    links,
+    "recapAuthor": recapAuthor->{ name, title },
+    "activityType": activityType->{ title, "slug": slug.current }
+  }`,
+
+  activityTypes: `*[_type == "activityType" && defined(slug.current)] | order(order asc){
+    _id, title, "slug": slug.current, image, icon, description
+  }`,
 
   people: `*[_type == "person"] | order(order asc){
     name, role, group, note, term
@@ -82,11 +129,8 @@ export const Q = {
     author->{ name, title, initial, accent }
   }`,
 
+
   articleSlugs: `*[_type == "article" && defined(slug.current)].slug.current`,
-
-  plansPage: `*[_type == "plansPage"][0]{ ..., tracks[]{ track, body${RICH} } }`,
-
-  planItems: `*[_type == "planItem"] | order(order asc)`,
 
   donate: `*[_type == "donatePage"][0]`,
 

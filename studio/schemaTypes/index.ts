@@ -3,12 +3,18 @@ import { verse } from './objects/verse'
 import { figure } from './objects/figure'
 import { imageRow } from './objects/imageRow'
 import { richText } from './objects/richText'
+import { navLink } from './objects/navLink'
+import { simpleText } from './objects/simpleText'
+import { photo } from './objects/photo'
+import { actionCard } from './objects/actionCard'
+import { videoEmbed } from './objects/videoEmbed'
 
 import { article } from './documents/article'
 import { author } from './documents/author'
 import { person } from './documents/person'
 import { event } from './documents/event'
 import { planItem } from './documents/planItem'
+import { activityType } from './documents/activityType'
 
 import { siteSettings } from './singletons/siteSettings'
 import { homePage } from './singletons/homePage'
@@ -17,11 +23,19 @@ import { plansPage } from './singletons/plansPage'
 import { donatePage } from './singletons/donatePage'
 import { contactPage } from './singletons/contactPage'
 import { boardAreaPage } from './singletons/boardAreaPage'
+import { navigation } from './singletons/navigation'
+import { aboutPage, joinPage, partnerPage, eventsPage, columnPage } from './singletons/simplePages'
 
 // 全站只會有一份的文件。Studio 會把它們顯示成單一頁面，不是清單。
 export const SINGLETONS = [
   'siteSettings',
+  'navigation',
   'homePage',
+  'aboutPage',
+  'joinPage',
+  'partnerPage',
+  'eventsPage',
+  'columnPage',
   'themesSection',
   'plansPage',
   'donatePage',
@@ -30,7 +44,7 @@ export const SINGLETONS = [
 ] as const
 
 export const schemaTypes = [
-  link, verse, figure, imageRow, richText,
-  article, author, person, event, planItem,
-  siteSettings, homePage, themesSection, plansPage, donatePage, contactPage, boardAreaPage,
+  link, verse, figure, imageRow, richText, navLink, simpleText, photo, actionCard, videoEmbed,
+  article, author, person, event, planItem, activityType,
+  siteSettings, navigation, homePage, aboutPage, joinPage, partnerPage, eventsPage, columnPage, themesSection, plansPage, donatePage, contactPage, boardAreaPage,
 ]
