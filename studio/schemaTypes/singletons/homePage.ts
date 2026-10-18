@@ -1,7 +1,7 @@
 import { defineArrayMember, defineField, defineType } from 'sanity'
 import { HREF_HELP, hrefValidation } from '../objects/navLink'
 
-// 首頁由上到下：輪播 → 主張 → 我們怎麼一起學（在「慢活共學」編輯）→ 近期活動（自動）→ 探索更多 → 行動呼籲。
+// 首頁由上到下：輪播 → 主張 → 我們怎麼一起學（在「慢活共學」編輯）→ 近期活動（自動）→ 慢活專欄（自動）→ 探索更多 → 行動呼籲。
 // 「認識學會」右側內文取自「認識學會」頁的前兩段。
 
 const HERO_TONES = [
@@ -25,6 +25,7 @@ export const homePage = defineType({
     { name: 'hero', title: '輪播', default: true },
     { name: 'statement', title: '主張' },
     { name: 'events', title: '近期活動' },
+    { name: 'column', title: '慢活專欄' },
     { name: 'tiles', title: '探索更多' },
     { name: 'cta', title: '行動呼籲' },
     { name: 'seo', title: '搜尋設定' },
@@ -123,6 +124,15 @@ export const homePage = defineType({
       type: 'string',
       group: 'events',
       description: '活動本身請到「內容 → 活動資訊」編輯，首頁會自動顯示最近三筆。',
+    }),
+
+    defineField({ name: 'columnTitle', title: '區塊標題', type: 'string', group: 'column', initialValue: '慢活專欄' }),
+    defineField({
+      name: 'columnSub',
+      title: '區塊副標',
+      type: 'string',
+      group: 'column',
+      description: '系列簡介請到「頁面文案 → 慢活專欄 → 專欄系列簡介」編輯；首頁會自動列出各系列與最新文章。',
     }),
 
     defineField({ name: 'tilesTitle', title: '區塊標題', type: 'string', group: 'tiles', initialValue: '探索更多' }),

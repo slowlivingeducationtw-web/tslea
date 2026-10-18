@@ -17,7 +17,7 @@ const cover = imageUrl(e.cover?.image, 900) ?? videoThumb(e.videoUrl)
 const isVideoThumb = !e.cover?.image && !!cover
 const more = badge?.kind === 'recap' ? '閱讀回顧' : '看活動內容'
 ---
-<article class={`card event-card badge-${badge?.kind ?? 'none'}`} data-type={type?.slug ?? ''}>
+<article class={`card event-card badge-${badge?.kind ?? 'none'}`} data-type={type?.slug ?? ''} data-status={badge?.kind ?? 'none'}>
   {cover ? (
     <div class="event-cover-wrap">
       <img class="event-cover" src={cover} alt={e.cover?.alt || ''} loading="lazy" decoding="async" />

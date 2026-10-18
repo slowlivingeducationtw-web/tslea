@@ -13,6 +13,7 @@ export type CmsEvent = {
   tag?: string
   cover?: { image?: any; alt?: string; caption?: string }
   hasRecap?: boolean
+  recapAuthor?: { name: string; title?: string } | null
   videoUrl?: string
   activityType?: { title: string; slug: string } | null
   signupStatus?: 'open' | 'free' | 'planning' | 'full'
@@ -42,6 +43,15 @@ export function badgeOf(e: Pick<CmsEvent, 'dateLabel' | 'sortDate' | 'signupStat
   if (e.hasRecap) return { kind: 'recap', label: '活動回顧' }
   return e.signupStatus ? { kind: e.signupStatus, label: SIGNUP_LABEL[e.signupStatus] } : undefined
 }
+
+/** 活動頁「依狀態看活動」的按鈕：一顆可以包含好幾種標籤（「隨時加入」也算報名中） */
+export const STATUS_FILTERS = [
+  { label: '報名中', kinds: ['open', 'free'] },
+  { label: '即將開放報名', kinds: ['planning'] },
+  { label: '已額滿', kinds: ['full'] },
+  { label: '活動回顧', kinds: ['recap'] },
+  { label: '已結束', kinds: ['ended'] },
+] as const
 
 /** 依序：還沒結束的（日期近的在前）→ 已結束的（新的在前） */
 export async function getEvents() {

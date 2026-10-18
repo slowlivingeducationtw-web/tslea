@@ -1,6 +1,7 @@
 ---
 // 首頁主視覺輪播：每頁一句話＋一張照片（照片到位前用色塊）。
 // 柔和淡入淡出、每 6 秒換頁；滑鼠移入或鍵盤聚焦時停止（2026-10 依學會要求拿掉暫停鈕）；
+// 換頁：圓點、左右箭頭（電腦版）、手指左右滑（手機）、鍵盤左右方向鍵；
 // 使用者系統設定「減少動態」時不自動播放。
 import Photo from './Photo.astro'
 
@@ -43,6 +44,17 @@ const { slides, interval = 6000 } = Astro.props
       </div>
     </div>
   ))}
+
+  {slides.length > 1 && (
+    <>
+      <button type="button" class="hero-arrow is-prev" data-step="-1" aria-label="上一頁">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+      </button>
+      <button type="button" class="hero-arrow is-next" data-step="1" aria-label="下一頁">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
+      </button>
+    </>
+  )}
 
   {slides.length > 1 && (
     <div class="hero-ctrl">
@@ -176,6 +188,24 @@ const { slides, interval = 6000 } = Astro.props
     }
 
     dots.forEach((d) => d.addEventListener('click', () => { show(Number(d.dataset.go)); schedule() }))
+    root.querySelectorAll<HTMLButtonElement>('.hero-arrow').forEach((b) =>
+      b.addEventListener('click', () => { show(current + Number(b.dataset.step)); schedule() }))
+    root.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+      e.preventDefault()
+      show(current + (e.key === 'ArrowRight' ? 1 : -1))
+    })
+    // 手機左右滑：水平移動超過 40px、且明顯比上下移動多才算，不影響上下捲動頁面
+    let touchX = 0
+    let touchY = 0
+    root.addEventListener('touchstart', (e) => { touchX = e.touches[0].clientX; touchY = e.touches[0].clientY }, { passive: true })
+    root.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - touchX
+      const dy = e.changedTouches[0].clientY - touchY
+      if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+      show(current + (dx < 0 ? 1 : -1))
+      schedule()
+    }, { passive: true })
     root.addEventListener('mouseenter', () => { hover = true; schedule() })
     root.addEventListener('mouseleave', () => { hover = false; schedule() })
     root.addEventListener('focusin', () => { hover = true; schedule() })
@@ -196,7 +226,7 @@ const { slides, interval = 6000 } = Astro.props
 </script>
 
 <style>
-  .hero-c { position: relative; min-height: min(80vh, 760px); overflow: hidden; background: var(--forest-deep); }
+  .hero-c { position: relative; min-height: min(80vh, 760px); overflow: hidden; background: var(--forest-deep); touch-action: pan-y; }
   .hero-slide {
     position: absolute; inset: 0; display: flex; align-items: center;
     opacity: 0; visibility: hidden; transition: opacity 1.2s ease, visibility 1.2s;
@@ -244,9 +274,28 @@ const { slides, interval = 6000 } = Astro.props
   }
   .hero-dot[aria-current='true'] { width: 32px; background: #fff; }
   .hero-dot:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+  /* 圓點很小，手指點擊範圍往外放大 */
+  .hero-dot { position: relative; }
+  .hero-dot::before { content: ''; position: absolute; inset: -10px -4px; }
+
+  /* 左右箭頭：電腦版常駐但低調，滑鼠移到主視覺上才變明顯；手機改用滑的，不顯示 */
+  .hero-arrow {
+    position: absolute; top: 50%; z-index: 2; transform: translateY(-50%);
+    width: 52px; height: 52px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.45);
+    background: rgba(28, 46, 34, 0.25); color: #fff; cursor: pointer; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    opacity: 0.55; transition: opacity 0.25s, background 0.25s;
+  }
+  .hero-arrow.is-prev { left: clamp(0.8rem, 2.5vw, 2rem); }
+  .hero-arrow.is-next { right: clamp(0.8rem, 2.5vw, 2rem); }
+  .hero-c:hover .hero-arrow { opacity: 0.9; }
+  .hero-arrow:hover { opacity: 1; background: rgba(28, 46, 34, 0.5); }
+  .hero-arrow:focus-visible { opacity: 1; outline: 2px solid #fff; outline-offset: 3px; }
+  .hero-arrow svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
   @media (max-width: 640px) {
     .hero-c { min-height: 520px; }
+    .hero-arrow { display: none; }
     .hero-c-inner { padding-top: 4rem; padding-bottom: 5.5rem; }
     .hero-c-title { letter-spacing: 0.08em; }
     .hero-c-title.size-md { letter-spacing: 0.04em; }

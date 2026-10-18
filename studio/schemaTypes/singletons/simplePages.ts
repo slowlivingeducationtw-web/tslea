@@ -112,6 +112,31 @@ export const columnPage = defineType({
   fields: [
     ...pageHeadFields(),
     defineField({ name: 'emptyText', title: '分類沒有文章時顯示', type: 'simpleText' }),
+    defineField({
+      name: 'series',
+      title: '專欄系列簡介',
+      type: 'array',
+      description:
+        '每個系列一段小簡介，會顯示在首頁「慢活專欄」、專欄頁的系列篩選、以及同系列文章的頁尾。可拖曳調整順序（首頁照這個順序）。',
+      of: [
+        defineArrayMember({
+          type: 'object',
+          name: 'columnSeries',
+          fields: [
+            defineField({
+              name: 'name',
+              title: '系列名稱',
+              type: 'string',
+              description: '必須和文章的「系列名稱」一字不差，例：慢活文字專欄｜每月一字',
+              validation: (r) => r.required(),
+            }),
+            defineField({ name: 'title', title: '專欄名', type: 'string', description: '例：跟著文字學慢活' }),
+            defineField({ name: 'intro', title: '小簡介', type: 'text', rows: 3, description: '建議 40～80 字：誰寫、寫什麼、讀者可以得到什麼。' }),
+          ],
+          preview: { select: { title: 'title', subtitle: 'name' } },
+        }),
+      ],
+    }),
   ],
   preview: { prepare: () => ({ title: '慢活專欄' }) },
 })

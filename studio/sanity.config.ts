@@ -7,6 +7,7 @@ import { schemaTypes, SINGLETONS } from './schemaTypes'
 import { structure } from './structure'
 import { theme } from './theme'
 import { Logo } from './components/Logo'
+import { ImportFacebookAction } from './importer/ImportFacebookAction'
 
 export default defineConfig({
   name: 'tslea',
@@ -34,9 +35,12 @@ export default defineConfig({
 
   document: {
     // 單例文件不能被建立第一份以外的複本，也不能刪除
+    // 專欄文章多一個「從臉書貼文匯入」（importer/）
     actions: (prev, { schemaType }) =>
       SINGLETONS.includes(schemaType as any)
         ? prev.filter(({ action }) => !['duplicate', 'delete', 'unpublish'].includes(action as string))
-        : prev,
+        : schemaType === 'article'
+          ? [...prev, ImportFacebookAction]
+          : prev,
   },
 })

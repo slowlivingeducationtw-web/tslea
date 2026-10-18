@@ -8,10 +8,13 @@
     "build": "sanity build",
     "deploy": "sanity deploy",
     "export": "sanity dataset export production",
-    "test:structure": "tsx test-structure.mts"
+    "test:structure": "tsx test-structure.mts",
+    "test:import": "tsx test-import.mts"
   },
   "dependencies": {
+    "@sanity/icons": "^5.2.2",
     "@sanity/locale-zh-hant": "^2.2.39",
+    "@sanity/ui": "^4.2.1",
     "@sanity/vision": "^6.15.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

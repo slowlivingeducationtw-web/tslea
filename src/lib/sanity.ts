@@ -66,6 +66,7 @@ const EVENT_CARD = `{
     "cover": cover${FIGURE},
     "videoUrl": video.url,
     "hasRecap": count(recap) > 0 || defined(video.url),
+    "recapAuthor": recapAuthor->{ name, title },
     "activityType": activityType->{ title, "slug": slug.current }
   }`
 
@@ -77,7 +78,7 @@ export const Q = {
   navigation: `*[_id == "navigation"][0]`,
 
   home: `*[_id == "homePage"][0]{
-    heroSlides, statement, statementHighlight, eventsTitle, eventsSub,
+    heroSlides, statement, statementHighlight, eventsTitle, eventsSub, columnTitle, columnSub,
     tilesTitle, tiles, ctaTitle, ctaText, ctaButtons, seoTitle, seoDescription
   }`,
 

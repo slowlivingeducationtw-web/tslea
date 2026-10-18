@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro'
 import EventCard from '../components/EventCard.astro'
-import { getEvents } from '../lib/events'
+import { getEvents, badgeOf, STATUS_FILTERS } from '../lib/events'
 import { fetchOne, Q } from '../lib/sanity'
 import FormatList from '../components/FormatList.astro'
 import { getSettings, getThemes, getActivityTypes, typeTone } from '../lib/site'
@@ -26,6 +26,8 @@ const [page, settings, learning, types] = await Promise.all([
   getThemes(),
   getActivityTypes(),
 ])
+// 第二排：依狀態（報名中、活動回顧、已結束……），只列目前真的有活動的狀態
+const statuses = STATUS_FILTERS.filter((f) => list.some((e) => (f.kinds as readonly string[]).includes(badgeOf(e)?.kind ?? '')))
 
 
 ---
@@ -58,8 +60,8 @@ const [page, settings, learning, types] = await Promise.all([
     ) : null}
 
 
-    {types.length > 0 && (
-      <nav class="type-filter" id="list" aria-label="依活動類別篩選">
+    {(types.length > 0 || statuses.length > 1) && (
+      <nav class="type-filter" id="list" aria-label="篩選活動">
         <div class="container type-filter-inner">
           <span class="type-filter-label">依類別看活動</span>
           <button type="button" class="type-btn is-on" data-type="" aria-pressed="true">全部</button>
@@ -67,12 +69,27 @@ const [page, settings, learning, types] = await Promise.all([
             <button type="button" class={`type-btn tone-${typeTone(types, t.slug)}`} data-type={t.slug} aria-pressed="false">{t.title}</button>
           ))}
         </div>
+        {statuses.length > 1 && (
+          <div class="container type-filter-inner status-row">
+            <span class="type-filter-label">依狀態看活動</span>
+            {statuses.map((f) => (
+              <button type="button" class="type-btn status-btn" data-status={f.kinds.join(',')} aria-pressed="false">{f.label}</button>
+            ))}
+          </div>
+        )}
       </nav>
     )}
 
     <section class="block block-alt filterable" id="current" aria-labelledby="current-title">
       <div class="container">
         <h2 id="current-title" class="block-title events-h">{page.currentTitle || '活動一覽'}</h2>
+        {/* 選了某個活動類別時，列表上方顯示該類別的說明（用 data-intro，不能用 data-type，否則會被當成活動計數） */}
+        {types.filter((t) => t.description).map((t) => (
+          <div class="type-intro" data-intro={t.slug} hidden>
+            <h3 class="type-intro-title">{t.title}</h3>
+            <p class="type-intro-text">{t.description}</p>
+          </div>
+        ))}
         {list.length > 0 ? (
           <div class="grid-3">{list.map((e) => <EventCard event={e} />)}</div>
         ) : (
@@ -86,11 +103,12 @@ const [page, settings, learning, types] = await Promise.all([
   </div>
 
   <script>
-    // 依活動類別篩選：上方按鈕、「學會活動」的圖示、網址 ?type=… 三種方式都會套用
+    // 依活動類別或依狀態篩選（一次只用一種）：上方按鈕、「學會活動」的圖示、網址 ?type=… / ?status=… 都會套用
     const btns = [...document.querySelectorAll<HTMLButtonElement>('.type-btn')]
-    function apply(type: string) {
+    function apply(type: string, status = '') {
+      const kinds = status ? status.split(',') : []
       btns.forEach((b) => {
-        const on = b.dataset.type === type
+        const on = b.dataset.status !== undefined ? b.dataset.status === status : !status && b.dataset.type === type
         b.classList.toggle('is-on', on)
         b.setAttribute('aria-pressed', String(on))
       })
@@ -98,23 +116,28 @@ const [page, settings, learning, types] = await Promise.all([
         const items = [...sec.querySelectorAll<HTMLElement>('[data-type]')]
         let shown = 0
         items.forEach((el) => {
-          const hit = !type || el.dataset.type === type
+          const hit = status ? kinds.includes(el.dataset.status ?? '') : !type || el.dataset.type === type
           ;(el.closest('li, .grid-3 > *') as HTMLElement ?? el).hidden = !hit
           if (hit) shown++
         })
-        const none = !!type && shown === 0
+        const none = (!!type || !!status) && shown === 0
         // 「即將舉行」留著並說明沒有；回顧與已辦理沒有符合的就整區收起，避免一長串「沒有」
         if (sec.id === 'current') {
           const empty = sec.querySelector<HTMLElement>('.filter-empty')
           if (empty) empty.hidden = !(none && items.length > 0)
         } else sec.hidden = none
       })
+      document.querySelectorAll<HTMLElement>('[data-intro]').forEach((el) => (el.hidden = !!status || el.dataset.intro !== type))
       const url = new URL(location.href)
-      if (type) url.searchParams.set('type', type)
-      else url.searchParams.delete('type')
+      url.searchParams.delete('type')
+      url.searchParams.delete('status')
+      if (status) url.searchParams.set('status', status)
+      else if (type) url.searchParams.set('type', type)
       history.replaceState(null, '', url)
     }
-    btns.forEach((b) => b.addEventListener('click', () => apply(b.dataset.type ?? '')))
+    btns.forEach((b) =>
+      b.addEventListener('click', () => (b.dataset.status !== undefined ? apply('', b.dataset.status) : apply(b.dataset.type ?? ''))),
+    )
     // 同一頁的「學會活動」圖示：直接篩選並捲到清單，不重新載入
     document.querySelectorAll<HTMLAnchorElement>('.format-link').forEach((a) =>
       a.addEventListener('click', (ev) => {
@@ -123,12 +146,21 @@ const [page, settings, learning, types] = await Promise.all([
         document.getElementById('list')?.scrollIntoView({ behavior: 'smooth' })
       }),
     )
-    const want = new URLSearchParams(location.search).get('type')
-    if (want && btns.some((b) => b.dataset.type === want)) apply(want)
+    const params = new URLSearchParams(location.search)
+    const wantStatus = params.get('status')
+    const want = params.get('type')
+    if (wantStatus && btns.some((b) => b.dataset.status === wantStatus)) apply('', wantStatus)
+    else if (want && btns.some((b) => b.dataset.type === want)) apply(want)
   </script>
 </Base>
 
 <style>
   .events-h { margin-bottom: 2rem; }
+  /* 狀態那排緊貼類別那排；未選取時用淺底，和類別按鈕分得出來 */
+  .status-row { padding-top: 0; }
+  .status-btn:not(.is-on) { background: var(--forest-pale); border-color: transparent; }
+  .type-intro { margin-bottom: 2rem; padding: 1.4rem 1.6rem; background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--forest); border-radius: var(--radius); }
+  .type-intro-title { font-size: 1.2rem; font-weight: 700; letter-spacing: 0.08em; color: var(--ink); }
+  .type-intro-text { margin-top: 0.5rem; font-size: 1rem; line-height: 1.9; color: var(--ink-soft); }
   .events-empty { font-size: 1rem; color: var(--ink-soft); line-height: 1.9; }
 </style>

@@ -1,5 +1,5 @@
 ---
-// 專欄文章卡片：和活動卡片同樣的版型，整張可點進文章頁（/column/{slug}）。
+// 專欄文章卡片：和活動卡片同樣的版型，整張可點進文章頁（/column/{slug}）；活動回顧則點進活動頁。
 import { imageUrl } from '../lib/sanity'
 import { categoryOf, dateText, type Article } from '../lib/column'
 
@@ -8,7 +8,7 @@ const { article: a } = Astro.props
 const cat = categoryOf(a.category)
 const cover = imageUrl(a.cover?.image, 900)
 ---
-<article class="card post-card" data-type={a.category}>
+<article class="card post-card" data-type={a.category} data-series={a.series || undefined}>
   {cover ? (
     <img class="post-cover" src={cover} alt={a.cover?.alt || ''} loading="lazy" decoding="async" />
   ) : (
@@ -20,7 +20,7 @@ const cover = imageUrl(a.cover?.image, 900)
       {a.series && <span class="post-series">{a.series}</span>}
     </div>
     <p class="post-date">{dateText(a.publishedAt)}{a.author ? `・${a.author.name}` : ''}</p>
-    <h3 class="card-title"><a class="post-link" href={`/column/${a.slug}`}>{a.title}</a></h3>
+    <h3 class="card-title"><a class="post-link" href={a.href ?? `/column/${a.slug}`}>{a.title}</a></h3>
     {a.excerpt && <p class="card-text">{a.excerpt}</p>}
     <div class="card-foot"><span class="card-more" aria-hidden="true">閱讀全文 →</span></div>
   </div>
