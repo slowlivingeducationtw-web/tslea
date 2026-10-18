@@ -11,6 +11,14 @@ const current = (href: string) => (href === path ? 'page' : undefined)
 const inSection = (item: NavItem) =>
   item.href === path || item.children?.some((c) => c.href === path)
 const ext = (href: string) => (isExternal(href) ? { target: '_blank', rel: 'noopener' } : {})
+// 子選單：後台勾「縮排一層」的項目收到上一個沒縮排的項目底下（例：全部文章 → 各分類）
+type Sub = NonNullable<NavItem['children']>[number]
+const nest = (children: Sub[] = []) =>
+  children.reduce<{ link: Sub; subs: Sub[] }[]>((out, c) => {
+    if (c.indent && out.length) out[out.length - 1].subs.push(c)
+    else out.push({ link: c, subs: [] })
+    return out
+  }, [])
 ---
 <header class="site-header" id="mainNav">
   <div class="site-header-inner">
@@ -30,8 +38,15 @@ const ext = (href: string) => (isExternal(href) ? { target: '_blank', rel: 'noop
             </a>
             {item.children?.length ? (
               <ul class="nav-sub" aria-label={`${item.label} 子選單`}>
-                {item.children.map((c) => (
-                  <li><a href={c.href} {...ext(c.href)}>{c.label}</a></li>
+                {nest(item.children).map(({ link: c, subs }) => (
+                  <li class={subs.length ? 'has-nest' : undefined}>
+                    <a href={c.href} {...ext(c.href)}>{c.label}</a>
+                    {subs.length > 0 && (
+                      <ul class="nav-nest">
+                        {subs.map((x) => <li><a href={x.href} {...ext(x.href)}>{x.label}</a></li>)}
+                      </ul>
+                    )}
+                  </li>
                 ))}
               </ul>
             ) : null}

@@ -14,6 +14,8 @@ export type CmsEvent = {
   cover?: { image?: any; alt?: string; caption?: string }
   hasRecap?: boolean
   recapAuthor?: { name: string; title?: string } | null
+  /** 有回顧時，除了「活動回顧」也列在這些專欄分類底下 */
+  columnCategories?: string[]
   videoUrl?: string
   activityType?: { title: string; slug: string } | null
   signupStatus?: 'open' | 'free' | 'planning' | 'full'

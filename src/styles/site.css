@@ -260,6 +260,9 @@ body { background: var(--paper); color: var(--ink); font-weight: 400; }
 .has-sub:hover .sub-caret,
 .has-sub:focus-within .sub-caret { transform: rotate(225deg); margin-top: 0.2em; }
 .nav-sub a:not(.btn) { border-radius: 6px; font-size: 0.92rem; padding: 0.6rem 0.9rem; white-space: nowrap; }
+/* 子選單的第二層（後台「縮排一層」）：往右縮、左邊一條細線 */
+.nav-nest { list-style: none; margin: 0 0 0.3rem 1.1rem; padding-left: 0.4rem; border-left: 1px solid var(--line); }
+.nav-sub .nav-nest a:not(.btn) { padding: 0.45rem 0.8rem; font-size: 0.9rem; }
 .site-nav .nav-cta-menu { display: none; }
 
 .header-actions { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
@@ -311,6 +314,10 @@ body { background: var(--paper); color: var(--ink); font-weight: 400; }
   .nav-sub::before { display: none; }
   .has-sub:hover > .nav-sub, .has-sub:focus-within > .nav-sub { transform: none; }
   .nav-sub a:not(.btn) { color: var(--ink-soft); font-size: 0.92rem; padding: 0.55rem 0.6rem; }
+  /* 有第二層的項目獨佔一行，第二層在下面換行排列 */
+  .nav-sub > .has-nest { flex-basis: 100%; }
+  .nav-nest { display: flex; flex-wrap: wrap; margin: 0 0 0.2rem 0.6rem; }
+  .nav-sub .nav-nest a:not(.btn) { padding: 0.45rem 0.6rem; }
 }
 @media (max-width: 560px) {
   :root { --header-h: 64px; }

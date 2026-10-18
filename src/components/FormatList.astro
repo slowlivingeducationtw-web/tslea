@@ -7,7 +7,7 @@ import type { ActivityType } from '../lib/site'
 type Props = { formats: ActivityType[] }
 const { formats } = Astro.props
 ---
-<ul class="format-list" style={`--cols:${Math.min(formats.length, 5)}`}>
+<ul class="format-list" style={`--cols:${Math.min(formats.length, 6)}`}>
   {formats.map((f) => (
     <li class="format-item">
       <a class="format-link" href={`/events?type=${f.slug}#list`} data-type={f.slug}>
@@ -24,7 +24,7 @@ const { formats } = Astro.props
 </ul>
 
 <style>
-  /* 用 flex 讓最後一排不滿時置中（例：5 項排成 3＋2） */
+  /* 用 flex 讓最後一排不滿時置中（例：5 項在中等寬度排成 3＋2） */
   .format-list { --gap: 1.75rem; list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 2.6rem var(--gap); }
   .format-item { flex: 0 1 calc((100% - var(--gap) * (var(--cols, 4) - 1)) / var(--cols, 4)); display: flex; flex-direction: column; align-items: center; text-align: center; }
   .format-link { display: flex; flex-direction: column; align-items: center; color: inherit; text-decoration: none; }
@@ -43,7 +43,10 @@ const { formats } = Astro.props
     background: var(--clay-deep); opacity: 0.55;
   }
   .format-desc { font-size: 1rem; color: var(--ink-soft); line-height: 1.95; margin-top: 0.9rem; max-width: 19em; }
-  /* 項目數決定欄數（最多 5 欄），畫面窄時改 3 欄、2 欄、1 欄 */
+  /* 六欄時每欄較窄，說明字小一點，行數才不會拉得太長 */
+  .format-list[style*='--cols:6'] { --gap: 1.4rem; }
+  .format-list[style*='--cols:6'] .format-desc { font-size: 0.94rem; }
+  /* 項目數決定欄數（最多 6 欄，六類一排並列），畫面窄時改 3 欄（六類＝3＋3）、2 欄、1 欄 */
   @media (max-width: 1200px) { .format-item { flex-basis: calc((100% - var(--gap) * 2) / 3); } }
   @media (max-width: 1000px) { .format-item { flex-basis: calc((100% - var(--gap)) / 2); } }
   @media (max-width: 560px) { .format-item { flex-basis: 100%; } }

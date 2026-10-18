@@ -96,6 +96,13 @@ const statuses = STATUS_FILTERS.filter((f) => list.some((e) => (f.kinds as reado
           <p class="events-empty">{page.emptyText || '目前沒有公告中的活動，新活動會公布在這裡。'}</p>
         )}
         <p class="events-empty filter-empty" hidden>這個類別目前還沒有活動。</p>
+        {/* 選單的「報名中」等狀態連結：沒有符合的活動時說明一下，並指向粉專 */}
+        <p class="events-empty status-empty" hidden>
+          {page.emptyText || '目前沒有公告中的活動，新活動會公布在這裡。'}
+          {settings.facebook && (
+            <>最新消息請關注學會的 <a class="text-link" href={settings.facebook} target="_blank" rel="noopener">Facebook 粉絲專頁</a>。</>
+          )}
+        </p>
       </div>
     </section>
 
@@ -124,7 +131,9 @@ const statuses = STATUS_FILTERS.filter((f) => list.some((e) => (f.kinds as reado
         // 「即將舉行」留著並說明沒有；回顧與已辦理沒有符合的就整區收起，避免一長串「沒有」
         if (sec.id === 'current') {
           const empty = sec.querySelector<HTMLElement>('.filter-empty')
-          if (empty) empty.hidden = !(none && items.length > 0)
+          if (empty) empty.hidden = !(none && items.length > 0 && !status)
+          const statusEmpty = sec.querySelector<HTMLElement>('.status-empty')
+          if (statusEmpty) statusEmpty.hidden = !(none && !!status)
         } else sec.hidden = none
       })
       document.querySelectorAll<HTMLElement>('[data-intro]').forEach((el) => (el.hidden = !!status || el.dataset.intro !== type))
@@ -149,7 +158,8 @@ const statuses = STATUS_FILTERS.filter((f) => list.some((e) => (f.kinds as reado
     const params = new URLSearchParams(location.search)
     const wantStatus = params.get('status')
     const want = params.get('type')
-    if (wantStatus && btns.some((b) => b.dataset.status === wantStatus)) apply('', wantStatus)
+    // 狀態連結即使目前沒有那種活動（沒有按鈕）也照樣篩選，顯示「目前沒有」的說明
+    if (wantStatus) apply('', wantStatus)
     else if (want && btns.some((b) => b.dataset.type === want)) apply(want)
   </script>
 </Base>

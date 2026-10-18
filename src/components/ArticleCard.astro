@@ -6,9 +6,10 @@ import { categoryOf, dateText, type Article } from '../lib/column'
 type Props = { article: Article }
 const { article: a } = Astro.props
 const cat = categoryOf(a.category)
+const also = (a.alsoIn ?? []).filter((v) => v !== a.category).map(categoryOf)
 const cover = imageUrl(a.cover?.image, 900)
 ---
-<article class="card post-card" data-type={a.category} data-series={a.series || undefined}>
+<article class="card post-card" data-type={[a.category, ...also.map((c) => c.value)].join(' ')} data-series={a.series || undefined}>
   {cover ? (
     <img class="post-cover" src={cover} alt={a.cover?.alt || ''} loading="lazy" decoding="async" />
   ) : (
@@ -17,6 +18,7 @@ const cover = imageUrl(a.cover?.image, 900)
   <div class="card-body">
     <div class="post-top">
       <span class={`chip tone-${cat.tone}`}>{cat.label}</span>
+      {also.map((c) => <span class={`chip tone-${c.tone}`}>{c.label}</span>)}
       {a.series && <span class="post-series">{a.series}</span>}
     </div>
     <p class="post-date">{dateText(a.publishedAt)}{a.author ? `・${a.author.name}` : ''}</p>

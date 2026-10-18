@@ -1,4 +1,5 @@
 import { defineField, defineType } from 'sanity'
+import { CATEGORIES } from '../shared'
 
 // 活動：一筆一頁（/events/{網址代稱}）。
 // 「活動介紹／報名」與「活動回顧」各自一筆，用「對應的介紹／回顧」互相連結，頁面上會互相顯示連結。
@@ -126,6 +127,16 @@ export const event = defineType({
       type: 'richText',
       group: 'recap',
       description: '活動辦完後寫在這裡，可以插入照片。填了之後，卡片會改標「活動回顧」。',
+    }),
+    defineField({
+      name: 'columnCategories',
+      title: '也放進專欄分類（選填，可複選）',
+      type: 'array',
+      of: [{ type: 'string' }],
+      group: 'recap',
+      description:
+        '有回顧的活動會自動出現在慢活專欄的「活動回顧」；勾了這裡，也會出現在勾選的分類底下（例：《種土》放映 → 生態永續）。',
+      options: { list: CATEGORIES.filter((c) => c.value !== 'other'), layout: 'grid' },
     }),
     defineField({
       name: 'recapAuthor',

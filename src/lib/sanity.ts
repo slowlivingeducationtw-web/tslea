@@ -67,6 +67,7 @@ const EVENT_CARD = `{
     "videoUrl": video.url,
     "hasRecap": count(recap) > 0 || defined(video.url),
     "recapAuthor": recapAuthor->{ name, title },
+    columnCategories,
     "activityType": activityType->{ title, "slug": slug.current }
   }`
 

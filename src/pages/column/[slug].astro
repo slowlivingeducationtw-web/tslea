@@ -6,7 +6,7 @@ import PortableText from '../../components/PortableText.astro'
 import ArticleCard from '../../components/ArticleCard.astro'
 import SideList, { type SideGroup } from '../../components/SideList.astro'
 import { sanity, Q, imageUrl, imageDims, fetchOne } from '../../lib/sanity'
-import { CATEGORIES, categoryOf, dateText, getArticles, getColumnItems, seriesLabel, type SeriesDef } from '../../lib/column'
+import { CATEGORIES, categoryOf, dateText, getArticles, getColumnItems, inCategory, seriesLabel, type SeriesDef } from '../../lib/column'
 
 export async function getStaticPaths() {
   const slugs = await sanity.fetch<string[]>(Q.articleSlugs)
@@ -30,7 +30,7 @@ const [all, items, columnPage] = await Promise.all([
 // 左側列表：依分類分組（新的在前，含活動回顧），每組最多 8 篇，目前這篇一定列出
 const SIDE_MAX = 8
 const side: SideGroup[] = CATEGORIES.map((c) => {
-  const inCat = items.filter((x) => x.category === c.value)
+  const inCat = items.filter((x) => inCategory(x, c.value))
   const shown = inCat.slice(0, SIDE_MAX)
   const self = inCat.find((x) => !x.href && x.slug === a.slug)
   if (self && !shown.includes(self)) shown.push(self)

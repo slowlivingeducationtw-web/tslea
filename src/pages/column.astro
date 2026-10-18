@@ -5,13 +5,13 @@ import Base from '../layouts/Base.astro'
 import PortableText from '../components/PortableText.astro'
 import ArticleCard from '../components/ArticleCard.astro'
 import { fetchOne, Q } from '../lib/sanity'
-import { CATEGORIES, getColumnItems, seriesOf, type SeriesDef } from '../lib/column'
+import { CATEGORIES, getColumnItems, inCategory, seriesOf, type SeriesDef } from '../lib/column'
 
 type Page = { title: string; lead?: string; seoDescription?: string; emptyText?: any[]; series?: SeriesDef[] }
 // 專欄文章＋活動回顧（活動回顧是一個分類，點了回到原本的活動頁）
 const [articles, page] = await Promise.all([getColumnItems(), fetchOne<Page>(Q.columnPage, {}, '慢活專欄頁面')])
 // 篩選按鈕只列有文章的分類，避免點了是空的
-const used = CATEGORIES.filter((c) => articles.some((a) => a.category === c.value))
+const used = CATEGORIES.filter((c) => articles.some((a) => inCategory(a, c.value)))
 // 第二排：依系列（後台文章的「系列名稱」，例：每月一字）；選了系列時列表上方顯示該系列的小簡介
 const series = seriesOf(articles, page.series)
 ---
@@ -78,7 +78,8 @@ const series = seriesOf(articles, page.series)
       })
       let shown = 0
       cards.forEach((c) => {
-        c.hidden = series ? c.dataset.series !== series : !!cat && c.dataset.type !== cat
+        // data-type 可能有好幾個分類（活動回顧＋生態永續），用空白隔開
+        c.hidden = series ? c.dataset.series !== series : !!cat && !(c.dataset.type ?? '').split(' ').includes(cat)
         if (!c.hidden) shown++
       })
       if (empty) empty.hidden = shown > 0

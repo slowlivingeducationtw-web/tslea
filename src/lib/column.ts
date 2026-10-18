@@ -29,7 +29,12 @@ export type Article = {
   author?: { name: string; title?: string } | null
   /** 不是專欄文章時的連結（活動回顧 → /events/{slug}） */
   href?: string
+  /** 同時也算在這些分類底下（活動回顧勾了「也放進專欄分類」） */
+  alsoIn?: string[]
 }
+
+/** 這篇算不算在某個分類底下（主分類或「也放進」的分類） */
+export const inCategory = (a: Article, cat: string) => a.category === cat || !!a.alsoIn?.includes(cat)
 
 /** 2026-09-14 → 2026.09.14 */
 export const dateText = (d?: string) => (d ? d.slice(0, 10).replaceAll('-', '.') : '')
@@ -82,6 +87,7 @@ export async function getColumnItems() {
       publishedAt: e.sortDate,
       cover: e.cover,
       author: e.recapAuthor,
+      alsoIn: e.columnCategories,
     }))
   return [...articles, ...recaps].sort((x, y) => y.publishedAt.localeCompare(x.publishedAt))
 }

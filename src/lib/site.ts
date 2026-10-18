@@ -3,7 +3,7 @@
 import { sanity, fetchOne, Q } from './sanity'
 
 export type Link = { label: string; href: string }
-export type NavItem = Link & { children?: Link[] }
+export type NavItem = Link & { children?: (Link & { indent?: boolean })[] }
 
 export type Settings = {
   orgName?: string

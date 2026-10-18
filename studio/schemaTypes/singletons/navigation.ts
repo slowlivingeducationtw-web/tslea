@@ -30,7 +30,7 @@ export const navigation = defineType({
               title: '子選單（選填）',
               type: 'array',
               description: '滑鼠移到主項目時展開；手機版直接列在下方。',
-              of: [defineArrayMember({ type: 'navLink' })],
+              of: [defineArrayMember({ type: 'navSubLink' })],
             }),
           ],
           preview: {
