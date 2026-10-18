@@ -34,6 +34,13 @@ export const person = defineType({
       description: '顯示在姓名下方的小字。例：李臺鴒會計稅務記帳士事務所',
     }),
     defineField({
+      name: 'speech',
+      title: '當選致詞（選填）',
+      type: 'text',
+      rows: 10,
+      description: '顯示在理監事頁下方的「當選致詞」，名片卡上會出現「讀致詞」連結。按 Enter 換行會照原樣顯示，空一行是分段。',
+    }),
+    defineField({
       name: 'term',
       title: '屆別',
       type: 'number',

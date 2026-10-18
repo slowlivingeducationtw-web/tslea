@@ -7,7 +7,7 @@ const cases: [string, Record<string, unknown>][] = [
   ['red-cypress', { title: '跟著氣味學慢活——五月・台灣紅檜', category: 'health', authorName: '郭純嵐（小嵐老師）', publishedAt: '2026-05-01' }],
   ['companionship', { title: '跟著旅人學慢活——陪伴，才是最難安排的行程', category: 'travel', authorName: '楊文鴻（楊導）' }],
   ['camphor', { title: '跟著氣味學慢活——四月・台灣芳樟', category: 'health', publishedAt: '2026-04-01' }],
-  ['zhenshi', { title: '真實，不虛', category: 'words', authorName: '臺灣慢活教育學會', series: undefined }],
+  ['zhenshi', { title: '真實，不虛', category: 'words', authorName: '臺灣慢活教育學會', series: '慢活小語' }],
   ['flying', { title: '慢慢呼吸，慢慢飛翔，很好', category: 'words', authorName: '臺灣慢活教育學會' }],
   ['he', { title: '跟著文字學慢活——四月・禾', category: 'art', publishedAt: '2026-04-01', imageCredit: '圖像引用自《漢字好好教 好好教漢字》部件卡' }],
 ]

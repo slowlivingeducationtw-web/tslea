@@ -49,7 +49,7 @@ export const article = defineType({
       title: '系列（選填）',
       type: 'string',
       group: 'content',
-      description: '每月固定的專欄才選；慢活小語、單篇文章留空。要新增系列請找資訊總監。',
+      description: '固定的專欄或慢活小語才選；單篇文章留空。要新增系列請找資訊總監。',
       options: { list: SERIES },
     }),
     defineField({

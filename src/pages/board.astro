@@ -8,6 +8,7 @@ type Person = {
   group: 'director' | 'supervisor' | 'secretariat' | 'advisor'
   note?: string
   term: number
+  speech?: string
 }
 
 const all = await sanity.fetch<Person[]>(Q.people)
@@ -22,6 +23,12 @@ const by = (g: Person['group']) => people.filter((p) => p.group === g)
 const directors = by('director')
 const leaders = directors.filter((p) => p.role.includes('理事長'))
 const members = directors.filter((p) => !p.role.includes('理事長'))
+
+// 當選致詞：名單下方依序列出（理事→監事），名片卡上的「讀致詞」捲到這裡
+const speechId = (p: Person) => `speech-${p.name}`
+const speeches = [...directors, ...by('supervisor')].filter((p) => p.speech?.trim())
+const hasSpeech = (p: Person) => speeches.includes(p)
+const paras = (t: string) => t.trim().split(/\n\s*\n/)
 
 const GROUPS = [
   { key: 'supervisor', label: '監　事', accent: 'sky', bg: 'sky-pale', min: 130 },
@@ -50,6 +57,7 @@ const GROUPS = [
               <div style={`background:var(--earth-pale);padding:1.4rem 1.5rem;border-top:2px solid var(--earth${i === 0 ? '' : '-light'})`}>
                 <div style="font-size:0.82rem;letter-spacing:0.2em;color:var(--earth);margin-bottom:0.4rem">{p.role}</div>
                 <div style="font-size:1rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">{p.name}</div>
+                {hasSpeech(p) && <a class="speech-link" href={`#${speechId(p)}`}>讀致詞 ↓</a>}
               </div>
             ))}
           </div>
@@ -61,6 +69,7 @@ const GROUPS = [
               <div style="background:var(--cream);padding:1.2rem 1.5rem">
                 <div style="font-size:0.82rem;letter-spacing:0.2em;color:var(--muted);margin-bottom:0.35rem">{p.role}</div>
                 <div style="font-size:0.95rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">{p.name}</div>
+                {hasSpeech(p) && <a class="speech-link" href={`#${speechId(p)}`}>讀致詞 ↓</a>}
               </div>
             ))}
           </div>
@@ -81,6 +90,7 @@ const GROUPS = [
                     {p.name}
                     {p.note && <><br /><span style="font-size:0.94rem;font-weight:400;letter-spacing:0.06em;color:var(--muted)">{p.note}</span></>}
                   </div>
+                  {hasSpeech(p) && <a class="speech-link" href={`#${speechId(p)}`}>讀致詞 ↓</a>}
                 </div>
               ))}
             </div>
@@ -88,5 +98,30 @@ const GROUPS = [
         )
       })}
     </section>
+
+    {speeches.length > 0 && (
+      <section class="sec speeches" id="speeches" aria-labelledby="speeches-title">
+        <h2 id="speeches-title" class="speeches-h">當選致詞</h2>
+        {speeches.map((p) => (
+          <article class="speech" id={speechId(p)}>
+            <h3 class="speech-name">{p.name}<span>｜{p.role}</span></h3>
+            {paras(p.speech!).map((t) => <p>{t}</p>)}
+          </article>
+        ))}
+      </section>
+    )}
   </div>
 </Base>
+
+<style>
+  .speech-link { display: inline-block; margin-top: 0.5rem; font-size: 0.82rem; letter-spacing: 0.08em; color: var(--earth); text-decoration: none; }
+  .speech-link:hover { text-decoration: underline; }
+  .speeches { background: var(--cream); padding-top: 3rem; }
+  .speeches-h { font-size: 1.3rem; font-weight: 700; letter-spacing: 0.2em; color: var(--charcoal); margin-bottom: 2rem; }
+  .speech { max-width: 44em; padding: 1.6rem 0; border-top: 1px solid var(--border); scroll-margin-top: calc(var(--header-h, 64px) + 1rem); }
+  .speech-name { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.12em; color: var(--charcoal); margin-bottom: 0.9rem; }
+  .speech-name span { font-weight: 400; font-size: 0.92rem; color: var(--earth); }
+  /* 致詞裡按 Enter 的換行照原樣顯示（詩句那樣的分行） */
+  .speech p { white-space: pre-line; line-height: 2; color: var(--charcoal); margin-top: 0.7rem; }
+  .speech:target { background: var(--earth-pale); padding-inline: 1rem; border-radius: 6px; }
+</style>

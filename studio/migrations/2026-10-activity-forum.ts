@@ -30,6 +30,7 @@ async function run() {
       if (item.href !== '/events' || item.children?.some((c: any) => /type=forum/.test(c.href))) return item
       const children = [...item.children]
       const after = children.findIndex((c: any) => /type=talk/.test(c.href))
+      if (after < 0) return item // 選單已精簡、不再列活動類別（2026-10-nav-events-sub.ts）
       children.splice(after + 1, 0, { _key: key(), _type: 'navSubLink', label: '慢活論壇', href: '/events?type=forum#list', indent: true })
       return { ...item, children }
     })

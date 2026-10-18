@@ -8,7 +8,7 @@
 //   文末的 #跟著X學慢活、#臺灣慢活教育學會
 // 另一種是學會名義的「慢活小語」（照第一篇〈真實，不虛〉的格式）：
 //   開頭「 標題 」（可有可無）、內文、結尾「慢慢呼吸／慢慢○○／很好」與「臺灣慢活教育學會 感恩祝福」
-//   → 分類慢活小語、作者臺灣慢活教育學會，不用選系列
+//   → 分類與系列都是慢活小語、作者臺灣慢活教育學會
 // 認不出來的地方放進 warnings，讓同仁在後台補。
 
 export type Paragraph =
@@ -86,7 +86,9 @@ export function parseFacebookPost(raw: string, today = new Date()): ParsedPost {
   if (sm && sm[1] in SERIES) {
     meta = SERIES[sm[1] as keyof typeof SERIES]
     series = `慢活文字專欄｜${sm[1]}`
-  } else if (!words) {
+  } else if (words) {
+    series = '慢活小語'
+  } else {
     warnings.push('第一行認不出是哪個專欄系列，請手動選「分類」與「系列」。')
   }
 

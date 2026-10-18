@@ -13,7 +13,8 @@ const [articles, page] = await Promise.all([getColumnItems(), fetchOne<Page>(Q.c
 // 篩選按鈕只列有文章的分類，避免點了是空的
 const used = CATEGORIES.filter((c) => articles.some((a) => inCategory(a, c.value)))
 // 第二排：依系列（後台文章的「系列名稱」，例：每月一字）；選了系列時列表上方顯示該系列的小簡介
-const series = seriesOf(articles, page.series)
+// 和分類同名的系列（慢活小語）不另外列按鈕，免得出現兩顆一樣的
+const series = seriesOf(articles, page.series).filter((s) => !CATEGORIES.some((c) => c.label === s.label))
 ---
 <Base title={page.title} description={page.seoDescription}>
   <div class="page" id="page-column">

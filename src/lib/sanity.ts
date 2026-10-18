@@ -127,7 +127,7 @@ export const Q = {
   }`,
 
   people: `*[_type == "person"] | order(order asc){
-    name, role, group, note, term
+    name, role, group, note, term, speech
   }`,
 
   articles: `*[_type == "article"] | order(publishedAt desc){
