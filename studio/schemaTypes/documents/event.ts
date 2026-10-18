@@ -1,7 +1,7 @@
 import { defineField, defineType } from 'sanity'
 
-// 活動：一個活動一頁（/events/{網址代稱}）。
-// 活動前是宣傳（介紹、報名）；辦完後在同一筆補上「活動回顧」，卡片會自動標成「活動回顧」。
+// 活動：一筆一頁（/events/{網址代稱}）。
+// 「活動介紹／報名」與「活動回顧」各自一筆，用「對應的介紹／回顧」互相連結，頁面上會互相顯示連結。
 const SIGNUP = [
   { title: '開放報名中（醒目的陶土色，會顯示報名按鈕）', value: 'open' },
   { title: '隨時加入（不用報名，例：每月講座、長期徵稿）', value: 'free' },
@@ -34,7 +34,7 @@ export const event = defineType({
       title: '日期顯示文字',
       type: 'string',
       group: 'basic',
-      description: '網站上實際顯示的文字。例：2026 · 12 · 14、每月定期、長期徵稿。寫成「年 · 月 · 日」的活動，日期過了會自動改標「已結束」或「活動回顧」。',
+      description: '網站上實際顯示的文字。例：2026 · 12 · 14、2026 · 08 · 10 – 08 · 31（每週一）、每月定期。以「年 · 月 · 日」開頭的活動，排序日期過了會自動改標「已結束」。',
       validation: (r) => r.required(),
     }),
     defineField({
@@ -42,7 +42,7 @@ export const event = defineType({
       title: '排序用日期',
       type: 'date',
       group: 'basic',
-      description: '不會顯示在網站上，只用來排列先後。籌備中的活動請填預計日期。',
+      description: '不會顯示在網站上，用來排列先後、判斷是否已結束。多天的活動填最後一天；籌備中的活動填預計日期。',
       validation: (r) => r.required(),
     }),
     defineField({ name: 'place', title: '地點（選填）', type: 'string', group: 'basic' }),
@@ -104,6 +104,15 @@ export const event = defineType({
       description: '活動頁的完整介紹：內容、對象、時間流程、費用、注意事項等。',
     }),
 
+    defineField({
+      name: 'pair',
+      title: '對應的活動介紹／回顧',
+      type: 'reference',
+      to: [{ type: 'event' }],
+      weak: true,
+      group: 'recap',
+      description: '回顧文請選它的活動介紹（報名）那一筆，反過來也可以；只要在其中一筆設定，兩頁都會出現互相的連結。',
+    }),
     defineField({
       name: 'video',
       title: '活動影片',

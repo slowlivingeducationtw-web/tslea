@@ -126,6 +126,13 @@ const jsonLd = {
             </ul>
           )}
 
+          {e.pair?.slug && (
+            <a class="ev-pair" href={`/events/${e.pair.slug}`}>
+              <span class="ev-pair-label">{e.pair.isRecap ? '這場活動的回顧' : '這場活動的介紹與報名資訊'}</span>
+              <span class="ev-pair-title">{e.pair.title} →</span>
+            </a>
+          )}
+
           {showSignup && (
             <p class="ev-signup-again">
               <a class="btn btn-solid signup-btn" href={e.signupUrl} target="_blank" rel="noopener">我要報名 →<span class="sr-only">（另開新視窗）</span></a>
@@ -155,4 +162,8 @@ const jsonLd = {
   .ev-recap-h { font-size: clamp(1.4rem, 2.6vw, 1.8rem); font-weight: 700; color: var(--ink); letter-spacing: 0.1em; margin-bottom: 0.6rem; }
   .ev-by { font-size: 0.95rem; color: var(--ink-soft); margin-bottom: 1.6rem; }
   .ev-signup-again { margin-top: 2.4rem; }
+  .ev-pair { display: block; margin-top: 2.6rem; padding: 1.2rem 1.4rem; border-radius: var(--radius); background: var(--forest-pale); text-decoration: none; color: var(--forest-deep); }
+  .ev-pair:hover { background: #d6e3cf; }
+  .ev-pair-label { display: block; font-size: 0.9rem; color: var(--ink-soft); letter-spacing: 0.06em; }
+  .ev-pair-title { display: block; margin-top: 0.2rem; font-weight: 700; font-size: 1.05rem; }
 </style>

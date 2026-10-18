@@ -32,6 +32,7 @@ export type Theme = {
   description?: string
   image?: any
   category?: string
+  slug?: string
 }
 export type Themes = {
   title?: string

@@ -98,9 +98,11 @@ const ext = (href: string) => (isExternal(href) ? { target: '_blank', rel: 'noop
               </div>
               <div class="story-text">
                 {t.en && <p class="story-en">{t.en}</p>}
-                <h3 class="story-title">{t.title}</h3>
+                <h3 class="story-title">{t.slug ? <a href={`/themes/${t.slug}`}>{t.title}</a> : t.title}</h3>
                 {t.description && <p class="story-desc">{t.description}</p>}
-                {t.category && <a class="text-link" href={`/column?cat=${t.category}`}>閱讀{t.title}相關文章 →</a>}
+                {t.slug ? (
+                  <a class="text-link" href={`/themes/${t.slug}`}>認識{t.title} →</a>
+                ) : t.category && <a class="text-link" href={`/column?cat=${t.category}`}>閱讀{t.title}相關文章 →</a>}
               </div>
             </li>
           ))}
@@ -208,6 +210,9 @@ const ext = (href: string) => (isExternal(href) ? { target: '_blank', rel: 'noop
   }
 
   .formats-more { margin-top: 2.4rem; text-align: center; }
+
+  .story-title a { color: inherit; text-decoration: none; }
+  .story-title a:hover { color: var(--forest); }
 
   /* 5. 大圖入口 */
   .tiles { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1rem, 2vw, 1.5rem); margin-top: 2.5rem; }

@@ -59,6 +59,16 @@ const RICH = `[]{
   _type == "imageRow" => { ..., images[]${FIGURE} }
 }`
 
+// 活動卡片需要的欄位（活動列表、主題頁「相關活動」共用）
+const EVENT_CARD = `{
+    title, "slug": slug.current, dateLabel, sortDate, place, icon, description,
+    signupStatus, signupUrl, tag,
+    "cover": cover${FIGURE},
+    "videoUrl": video.url,
+    "hasRecap": count(recap) > 0 || defined(video.url),
+    "activityType": activityType->{ title, "slug": slug.current }
+  }`
+
 // ── 查詢 ──────────────────────────────────────────────────
 
 export const Q = {
@@ -71,7 +81,14 @@ export const Q = {
     tilesTitle, tiles, ctaTitle, ctaText, ctaButtons, seoTitle, seoDescription
   }`,
 
-  themes: `*[_id == "themesSection"][0]{ title, themes, formatsTitle }`,
+  themes: `*[_id == "themesSection"][0]{ title, themes[]{ ..., "slug": slug.current }, formatsTitle }`,
+
+  // 主題頁（/themes/{slug}）：完整介紹＋挑選的相關活動（未發布的活動會是 null，頁面上濾掉）
+  themePages: `*[_id == "themesSection"][0].themes[defined(slug.current)]{
+    _key, icon, title, en, description, image, category, "slug": slug.current,
+    body${RICH},
+    "events": events[]->${EVENT_CARD}
+  }`,
 
   aboutPage: `*[_id == "aboutPage"][0]{ ..., body${RICH} }`,
 
@@ -84,14 +101,7 @@ export const Q = {
   columnPage: `*[_id == "columnPage"][0]`,
 
   // 活動列表與卡片（一個活動一頁；hasRecap＝已補上活動回顧）
-  events: `*[_type == "event" && defined(slug.current)] | order(sortDate asc){
-    title, "slug": slug.current, dateLabel, sortDate, place, icon, description,
-    signupStatus, signupUrl, tag,
-    "cover": cover${FIGURE},
-    "videoUrl": video.url,
-    "hasRecap": count(recap) > 0 || defined(video.url),
-    "activityType": activityType->{ title, "slug": slug.current }
-  }`,
+  events: `*[_type == "event" && defined(slug.current)] | order(sortDate asc)${EVENT_CARD}`,
 
   event: `*[_type == "event" && slug.current == $slug][0]{
     title, "slug": slug.current, dateLabel, sortDate, place, icon, description,
@@ -102,6 +112,11 @@ export const Q = {
     video,
     links,
     "recapAuthor": recapAuthor->{ name, title },
+    // 對應的介紹／回顧：只要其中一筆設定，兩邊都找得到
+    "pair": coalesce(
+      pair->{ title, "slug": slug.current, "isRecap": count(recap) > 0 || defined(video.url) },
+      *[_type == "event" && pair._ref == ^._id][0]{ title, "slug": slug.current, "isRecap": count(recap) > 0 || defined(video.url) }
+    ),
     "activityType": activityType->{ title, "slug": slug.current }
   }`,
 
