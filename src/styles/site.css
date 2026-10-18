@@ -20,6 +20,7 @@
   /* 入口大圖塊的深色底（照片到位前使用） */
   --slate: #4E6B78;
   --olive: #5E6B3A;
+  --olive-pale: #E9EBD8;
 
   /* 形狀與陰影 */
   --radius: 14px;
@@ -219,7 +220,7 @@ body { background: var(--paper); color: var(--ink); font-weight: 400; }
   display: flex; align-items: center; gap: 1.5rem;
 }
 .site-logo { display: block; flex-shrink: 0; line-height: 0; border-radius: 4px; }
-/* logo-dark.png 是由 logo.png（黑底白字）轉出的透明底黑字版本，形狀與比例不變。
+/* logo-dark.png 是由學會提供的正確 logo（2026-10 白底黑字原檔）轉出的透明底黑字版本，形狀與比例不變。
    以前用 invert + mix-blend-mode 疊在半透明頁首上，捲動時會露出白色底框。 */
 .site-logo img { height: 52px; width: auto; display: block; transition: height 0.25s; }
 .site-header.scrolled .site-logo img { height: 42px; }

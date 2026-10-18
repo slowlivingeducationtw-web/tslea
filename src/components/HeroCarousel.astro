@@ -1,6 +1,6 @@
 ---
 // 首頁主視覺輪播：每頁一句話＋一張照片（照片到位前用色塊）。
-// 柔和淡入淡出、每 6 秒換頁；滑鼠移入、鍵盤聚焦或按暫停時停止；
+// 柔和淡入淡出、每 6 秒換頁；滑鼠移入或鍵盤聚焦時停止（2026-10 依學會要求拿掉暫停鈕）；
 // 使用者系統設定「減少動態」時不自動播放。
 import Photo from './Photo.astro'
 
@@ -52,9 +52,6 @@ const { slides, interval = 6000 } = Astro.props
                   aria-label={`顯示第 ${i + 1} 頁`} aria-current={i === 0 ? 'true' : undefined}></button>
         ))}
       </div>
-      <button type="button" class="hero-pause" aria-label="暫停輪播" data-state="playing">
-        <span class="i-pause" aria-hidden="true"></span><span class="i-play" aria-hidden="true"></span>
-      </button>
     </div>
   )}
 </section>
@@ -63,7 +60,6 @@ const { slides, interval = 6000 } = Astro.props
   document.querySelectorAll<HTMLElement>('.hero-c[aria-roledescription="carousel"]').forEach((root) => {
     const slides = [...root.querySelectorAll<HTMLElement>('.hero-slide')]
     const dots = [...root.querySelectorAll<HTMLButtonElement>('.hero-dot')]
-    const pauseBtn = root.querySelector<HTMLButtonElement>('.hero-pause')
     if (slides.length < 2) return
 
     const interval = Number(root.dataset.interval) || 6000
@@ -76,23 +72,47 @@ const { slides, interval = 6000 } = Astro.props
     // ── 背景影片：輪到那一頁才載入 YouTube（靜音、循環指定片段）；減少動態或省流量模式不載入 ──
     const saveData = (navigator as any).connection?.saveData === true
     const canVideo = !reduce && !saveData
-    type Vid = { box: HTMLElement; frame?: HTMLIFrameElement; start: number; end: number }
+    type Vid = { box: HTMLElement; frame?: HTMLIFrameElement; start: number; end: number; state?: number; seeking?: boolean; showTimer?: number }
     const vids = new Map<HTMLElement, Vid>()
     slides.forEach((s) => {
       const box = s.querySelector<HTMLElement>('.hero-video')
       if (box) vids.set(s, { box, start: Number(box.dataset.start) || 0, end: Number(box.dataset.end) || 0 })
     })
-    // 播放器會回報目前秒數；快到片段結尾就跳回開頭（YouTube 的 loop 不支援指定片段，end 參數又會停在結束畫面）
+    // YouTube 在暫停、跳轉、緩衝時會在畫面正中間閃出暫停／播放圖示或轉圈圈（controls=0 也關不掉）。
+    // 所以影片只在「確定正在播放」一小段時間後才淡入，其他狀態立刻退回照片，訪客就不會看到那些圖示。
+    const reveal = (v: Vid) => {
+      if (v.showTimer || v.box.classList.contains('is-playing')) return
+      v.showTimer = window.setTimeout(() => { v.showTimer = undefined; v.box.classList.add('is-playing') }, 900)
+    }
+    const conceal = (v: Vid) => {
+      window.clearTimeout(v.showTimer)
+      v.showTimer = undefined
+      v.box.classList.remove('is-playing')
+    }
+    // 播放器會回報播放狀態與目前秒數；快到片段結尾先退回照片、再跳回開頭
+    // （YouTube 的 loop 不支援指定片段，end 參數又會停在結束畫面）
     window.addEventListener('message', (ev) => {
       if (!/youtube(-nocookie)?\.com$/.test(new URL(ev.origin).hostname)) return
       let data: any
       try { data = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data } catch { return }
-      const t = data?.info?.currentTime
-      if (typeof t !== 'number') return
+      const info = data?.info
+      if (!info) return
       vids.forEach((v) => {
         if (v.frame?.contentWindow !== ev.source) return
-        if (v.end > v.start && t >= v.end - 0.4) { cmd(v, 'seekTo', [v.start, true]); cmd(v, 'playVideo') }
-        if (t >= v.start && t < v.end) v.box.classList.add('is-playing')
+        if (typeof info.playerState === 'number') v.state = info.playerState
+        const t = info.currentTime
+        if (typeof t === 'number' && v.end > v.start) {
+          if (t >= v.end - 1.2 && !v.seeking) {
+            v.seeking = true
+            conceal(v)
+            window.setTimeout(() => { cmd(v, 'seekTo', [v.start, true]); cmd(v, 'playVideo') }, 500)
+          } else if (v.seeking && t >= v.start && t < v.end - 2) {
+            v.seeking = false
+          }
+        }
+        const inRange = typeof t !== 'number' || v.end <= v.start || (t >= v.start && t < v.end - 1.2)
+        if ((v.state === 1 || (v.state === undefined && typeof info.currentTime === 'number')) && !v.seeking && inRange) reveal(v)
+        else if (v.state !== undefined && v.state !== 1) conceal(v)
       })
     })
     const cmd = (v: Vid, func: string, args: unknown[] = []) =>
@@ -103,7 +123,7 @@ const { slides, interval = 6000 } = Astro.props
       if (!v.frame) {
         const p = new URLSearchParams({
           autoplay: '1', mute: '1', controls: '0', playsinline: '1', rel: '0', disablekb: '1',
-          iv_load_policy: '3', modestbranding: '1', enablejsapi: '1', start: String(v.start),
+          iv_load_policy: '3', modestbranding: '1', enablejsapi: '1', start: String(v.start), fs: '0', cc_load_policy: '0',
           origin: location.origin,
         })
         const f = document.createElement('iframe')
@@ -122,6 +142,7 @@ const { slides, interval = 6000 } = Astro.props
     function pauseVideos(except?: HTMLElement) {
       vids.forEach((v, s) => {
         if (s === except) return
+        conceal(v)
         cmd(v, 'pauseVideo')
       })
     }
@@ -148,18 +169,13 @@ const { slides, interval = 6000 } = Astro.props
     }
     function setPaused(p: boolean) {
       userPaused = p
-      // 按暫停時背景影片也停；繼續時再播
+      // 減少動態時背景影片不播
       if (p) pauseVideos()
       else playVideo(slides[current])
-      if (pauseBtn) {
-        pauseBtn.dataset.state = p ? 'paused' : 'playing'
-        pauseBtn.setAttribute('aria-label', p ? '繼續輪播' : '暫停輪播')
-      }
       schedule()
     }
 
     dots.forEach((d) => d.addEventListener('click', () => { show(Number(d.dataset.go)); schedule() }))
-    pauseBtn?.addEventListener('click', () => setPaused(!userPaused))
     root.addEventListener('mouseenter', () => { hover = true; schedule() })
     root.addEventListener('mouseleave', () => { hover = false; schedule() })
     root.addEventListener('focusin', () => { hover = true; schedule() })
@@ -188,8 +204,9 @@ const { slides, interval = 6000 } = Astro.props
   .hero-slide.is-active { opacity: 1; visibility: visible; position: relative; min-height: inherit; }
   .hero-slide :global(.hero-c-media) { position: absolute; inset: 0; }
   /* 背景影片：蓋滿整個主視覺（16:9 依容器比例放大裁切），稍微放大藏住 YouTube 邊角介面 */
-  .hero-video { position: absolute; inset: 0; overflow: hidden; container-type: size; opacity: 0; transition: opacity 1.2s ease; pointer-events: none; }
-  .hero-video.is-playing { opacity: 1; }
+  /* 退回照片時立刻消失（不讓 YouTube 的暫停圖示在淡出時露出來），開始播放時才慢慢淡入 */
+  .hero-video { position: absolute; inset: 0; overflow: hidden; container-type: size; opacity: 0; transition: opacity 0.15s linear; pointer-events: none; }
+  .hero-video.is-playing { opacity: 1; transition: opacity 1.2s ease; }
   .hero-video :global(iframe) {
     position: absolute; top: 50%; left: 50%; border: 0;
     width: max(100cqw, calc(100cqh * 16 / 9)); height: max(100cqh, calc(100cqw * 9 / 16));
@@ -226,16 +243,7 @@ const { slides, interval = 6000 } = Astro.props
     background: rgba(255, 255, 255, 0.5); transition: width 0.3s, background 0.3s;
   }
   .hero-dot[aria-current='true'] { width: 32px; background: #fff; }
-  .hero-pause {
-    width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
-    border: 1.5px solid rgba(255, 255, 255, 0.7); background: rgba(0, 0, 0, 0.15);
-    display: inline-flex; align-items: center; justify-content: center;
-  }
-  .hero-dot:focus-visible, .hero-pause:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
-  .i-pause { width: 10px; height: 12px; border-left: 3px solid #fff; border-right: 3px solid #fff; }
-  .i-play { width: 0; height: 0; border-left: 11px solid #fff; border-top: 7px solid transparent; border-bottom: 7px solid transparent; margin-left: 3px; }
-  .hero-pause[data-state='playing'] .i-play,
-  .hero-pause[data-state='paused'] .i-pause { display: none; }
+  .hero-dot:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 
   @media (max-width: 640px) {
     .hero-c { min-height: 520px; }

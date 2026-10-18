@@ -11,7 +11,7 @@ export const siteSettings = defineType({
       name: 'orgNameEn',
       title: '英文名稱',
       type: 'string',
-      initialValue: 'Taiwan Slow Living Education Association',
+      initialValue: 'Slow Living Education Society of Taiwan',
     }),
     defineField({ name: 'address', title: '地址', type: 'string', description: '顯示在頁尾。' }),
     defineField({

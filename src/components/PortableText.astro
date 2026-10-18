@@ -13,7 +13,9 @@ function figureHtml(v: any, inRow = false) {
   if (!src) return ''
   const d = imageDims(v.image)
   const dim = d ? ` width="${d.width}" height="${d.height}"` : ''
-  const img = `<img src="${esc(src)}" alt="${esc(v.alt || '')}" loading="lazy" decoding="async"${dim}>`
+  // 點圖片看大圖：連到 2000px 版本；有 JS 時在頁面上開燈箱，沒有 JS 就直接開圖檔
+  const big = imageUrl(v.image, 2000)
+  const img = `<a class="pt-zoom" href="${esc(big!)}" aria-label="放大圖片${v.alt ? `：${esc(v.alt)}` : ''}"><img src="${esc(src)}" alt="${esc(v.alt || '')}" loading="lazy" decoding="async"${dim}></a>`
   if (inRow) return img
   return `<figure class="pt-figure">${img}${
     v.caption ? `<figcaption class="pt-caption">${esc(v.caption)}</figcaption>` : ''
@@ -56,3 +58,27 @@ const html = value
   : ''
 ---
 <div class={`pt ${className}`.trim()} set:html={html} />
+
+<script>
+  // 燈箱：點內文圖片放大，點任何地方、按 Esc 或「關閉」收起；手機可再用兩指縮放
+  let box: HTMLDialogElement | null = null
+  function open(href: string, alt: string) {
+    if (!box) {
+      box = document.createElement('dialog')
+      box.className = 'pt-lightbox'
+      box.innerHTML = '<button type="button" class="pt-lightbox-close">關閉 ✕</button><img alt="">'
+      box.addEventListener('click', () => box!.close())
+      document.body.append(box)
+    }
+    const img = box.querySelector('img')!
+    img.src = href
+    img.alt = alt
+    box.showModal()
+  }
+  document.addEventListener('click', (e) => {
+    const a = (e.target as Element).closest<HTMLAnchorElement>('a.pt-zoom')
+    if (!a || e.metaKey || e.ctrlKey || e.shiftKey || typeof HTMLDialogElement === 'undefined') return
+    e.preventDefault()
+    open(a.href, a.querySelector('img')?.alt ?? '')
+  })
+</script>

@@ -141,7 +141,7 @@ const ext = (href: string) => (isExternal(href) ? { target: '_blank', rel: 'noop
         <ul class="tiles">
           {(home.tiles ?? []).map((t) => (
             <li>
-              <a class={`tile tone-${t.tone ?? 'forest'}`} href={t.href} {...ext(t.href)}>
+              <a class={`tile tone-${t.tone ?? 'forest'}${t.image?.asset ? ' has-img' : ''}`} href={t.href} {...ext(t.href)}>
                 {t.image?.asset && <img src={imageUrl(t.image, 1000)} alt="" loading="lazy" decoding="async" />}
                 <span class="tile-title">{t.title}</span>
                 {t.text && <span class="tile-text">{t.text}</span>}
@@ -190,12 +190,15 @@ const ext = (href: string) => (isExternal(href) ? { target: '_blank', rel: 'noop
   .story-row.flip .story-media { order: 2; }
   .story-media { position: relative; }
   .story-media :global(.story-photo) { aspect-ratio: 4 / 3; border-radius: var(--radius); box-shadow: var(--shadow); }
+  /* 編號放在米白圓牌上，不論照片深淺都看得清楚 */
   .story-num {
-    position: absolute; z-index: 1; top: -0.55em; left: 0.3em;
-    font-size: clamp(3rem, 6vw, 4.5rem); font-weight: 700; line-height: 1; color: var(--forest);
+    position: absolute; z-index: 1; top: -0.6em; left: 0.4em;
+    display: flex; align-items: center; justify-content: center;
+    width: 1.6em; height: 1.6em; border-radius: 50%; background: var(--paper); box-shadow: var(--shadow);
+    font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 700; line-height: 1; color: var(--clay-deep);
     font-family: 'Cormorant Garamond', serif; font-style: italic;
   }
-  .story-row.flip .story-num { left: auto; right: 0.3em; }
+  .story-row.flip .story-num { left: auto; right: 0.4em; }
   .story-en { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.1rem; color: var(--ink-soft); letter-spacing: 0.08em; }
   .story-title { font-size: clamp(1.4rem, 2.6vw, 1.8rem); font-weight: 700; color: var(--ink); letter-spacing: 0.1em; margin: 0.3rem 0 1rem; }
   .story-desc { font-size: 1.02rem; line-height: 2.1; color: var(--ink-soft); margin-bottom: 1.2rem; max-width: 30em; }
@@ -216,28 +219,33 @@ const ext = (href: string) => (isExternal(href) ? { target: '_blank', rel: 'noop
 
   /* 5. 大圖入口 */
   .tiles { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1rem, 2vw, 1.5rem); margin-top: 2.5rem; }
+  /* 淺色底＋深色字（2026-10 改為輕盈色系）；上傳照片的圖塊維持照片壓暗＋白字 */
   .tile {
     position: relative; display: flex; flex-direction: column; justify-content: flex-start;
     min-height: clamp(180px, 22vw, 280px); padding: clamp(1.4rem, 3vw, 2.2rem);
-    border-radius: var(--radius); overflow: hidden; color: #fff; text-decoration: none;
+    border-radius: var(--radius); overflow: hidden; color: var(--ink); text-decoration: none;
+    background: var(--tile-bg); border: 1px solid var(--line);
     box-shadow: var(--shadow); transition: box-shadow 0.25s, transform 0.25s;
   }
   .tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; filter: brightness(0.7); }
   .tile > span { position: relative; z-index: 1; }
-  .tile.tone-forest { background: linear-gradient(140deg, #4C7558, var(--forest)); }
-  .tile.tone-slate { background: linear-gradient(140deg, #6A8794, var(--slate)); }
-  .tile.tone-clay { background: linear-gradient(140deg, #A9774F, var(--clay-deep)); }
-  .tile.tone-olive { background: linear-gradient(140deg, #7A8752, var(--olive)); }
+  .tile.tone-forest { --tile-bg: var(--forest-pale); --tile-accent: var(--forest); }
+  .tile.tone-slate { --tile-bg: var(--mist); --tile-accent: var(--slate); }
+  .tile.tone-clay { --tile-bg: var(--clay); --tile-accent: var(--clay-deep); }
+  .tile.tone-olive { --tile-bg: var(--olive-pale); --tile-accent: var(--olive); }
+  .tile.has-img { color: #fff; }
   .tile:hover { box-shadow: var(--shadow-hover); transform: translateY(-3px); }
   .tile:focus-visible { outline: 3px solid var(--forest); outline-offset: 4px; }
-  .tile-title { font-size: clamp(1.4rem, 2.6vw, 1.9rem); font-weight: 700; letter-spacing: 0.12em; }
-  .tile-text { margin-top: 0.5rem; font-size: 1rem; letter-spacing: 0.06em; opacity: 0.92; }
+  .tile-title { font-size: clamp(1.4rem, 2.6vw, 1.9rem); font-weight: 700; letter-spacing: 0.12em; color: var(--tile-accent); }
+  .tile-text { margin-top: 0.5rem; font-size: 1rem; letter-spacing: 0.06em; color: var(--ink-soft); }
+  .tile.has-img .tile-title, .tile.has-img .tile-text { color: #fff; }
   .tile-arrow {
     position: absolute !important; right: clamp(1.2rem, 2.5vw, 1.8rem); bottom: clamp(1.2rem, 2.5vw, 1.8rem);
-    width: 52px; height: 52px; border-radius: 50%; background: #fff; color: var(--ink);
+    width: 52px; height: 52px; border-radius: 50%; background: var(--tile-accent); color: #fff;
     display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700;
     transition: transform 0.25s;
   }
+  .tile.has-img .tile-arrow { background: #fff; color: var(--ink); }
   .tile:hover .tile-arrow { transform: translateX(4px); }
   @media (max-width: 640px) { .tiles { grid-template-columns: minmax(0, 1fr); } }
 

@@ -610,3 +610,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .pt-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:1.5rem; }
 .pt-row img { width:100%; height:auto; display:block; border:1px solid var(--border); }
 @media (max-width:680px) { .pt-row { grid-template-columns:1fr; gap:12px; } }
+
+/* 點圖片放大（燈箱） */
+.pt a.pt-zoom { display:block; border-bottom:0; cursor:zoom-in; }
+.pt-lightbox { max-width:100vw; max-height:100vh; width:100vw; height:100vh; margin:0; padding:0; border:0;
+  background:color-mix(in srgb, var(--ink) 94%, transparent); cursor:zoom-out; }
+.pt-lightbox::backdrop { background:transparent; }
+.pt-lightbox[open] { display:flex; align-items:center; justify-content:center; }
+.pt-lightbox img { max-width:96vw; max-height:92vh; width:auto; height:auto; object-fit:contain; }
+.pt-lightbox-close { position:fixed; top:1rem; right:1rem; padding:0.5rem 1rem; border:0; border-radius:999px;
+  background:var(--paper); color:var(--ink); font:inherit; font-size:0.95rem; cursor:pointer; }
