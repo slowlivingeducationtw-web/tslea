@@ -4,6 +4,7 @@ import { Box, Button, Card, Flex, Stack, Text, TextArea } from '@sanity/ui'
 import { DocumentTextIcon } from '@sanity/icons/DocumentText'
 import { parseFacebookPost } from './parseFacebookPost'
 import { articleFields, toFigures } from './buildArticle'
+import { CATEGORIES } from '../schemaTypes/shared'
 
 // 專欄文章右下角選單的「從臉書貼文匯入」：貼上臉書全文、拖進圖片，自動填好文章欄位。
 // 只填草稿，不會自動發布；認不出來的地方會列出來請同仁補。
@@ -133,7 +134,8 @@ export const ImportFacebookAction: DocumentActionComponent = (props) => {
           <Stack space={3}>
             <Text size={1} weight="semibold">3. 自動判斷的結果</Text>
             {row('標題', parsed.title)}
-            {row('系列', parsed.series)}
+            {row('分類', CATEGORIES.find((c) => c.value === parsed.category)?.title)}
+            {parsed.series && row('系列', parsed.series)}
             {row('作者', parsed.authorName)}
             {row('日期', parsed.publishedAt)}
             {row('內文', `${parsed.paragraphs.length} 段`)}

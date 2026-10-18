@@ -6,6 +6,9 @@
 //   ╴╴╴ 分隔線
 //   「編寫 / 姓名 / 稱銜」、「facebook 粉專：XXX」、「圖像引用自……」
 //   文末的 #跟著X學慢活、#臺灣慢活教育學會
+// 另一種是學會名義的「慢活小語」（照第一篇〈真實，不虛〉的格式）：
+//   開頭「 標題 」（可有可無）、內文、結尾「慢慢呼吸／慢慢○○／很好」與「臺灣慢活教育學會 感恩祝福」
+//   → 分類慢活小語、作者臺灣慢活教育學會，不用選系列
 // 認不出來的地方放進 warnings，讓同仁在後台補。
 
 export type Paragraph =
@@ -15,7 +18,8 @@ export type Paragraph =
 export interface ParsedPost {
   title: string
   series?: string
-  seriesKey?: 'word' | 'scent' | 'travel'
+  /** 網址代稱的開頭；慢活小語沒有系列但也用這個（words-2026-02） */
+  seriesKey?: 'word' | 'scent' | 'travel' | 'words'
   category: string
   accent: string
   authorName?: string
@@ -68,16 +72,22 @@ export function parseFacebookPost(raw: string, today = new Date()): ParsedPost {
     .split('\n')
     .map((l) => l.trim())
 
-  // ── 開頭：系列 ──
+  // ── 開頭：系列，或慢活小語的「 標題 」 ──
   let series: string | undefined
   let meta: (typeof SERIES)[keyof typeof SERIES] | undefined
   const head = lines.find((l) => l)
   const sm = head?.match(/慢活文字專欄\s*[｜|]\s*(每月一.)/)
+  const bracketTitle = head?.match(/^「\s*(.+?)\s*」$/)?.[1]
+  // 慢活小語：結尾有「慢慢呼吸／慢慢○○／很好」或「臺灣慢活教育學會 感恩祝福」
+  const codeAt = lines.findIndex((l, i) => l === '慢慢呼吸' && /^慢慢\S+$/.test(lines[i + 1] ?? '') && /^很好[。！]?$/.test(lines[i + 2] ?? ''))
+  const code = codeAt >= 0 ? lines[codeAt + 1].replace(/^慢慢/, '') : undefined
+  const signOff = lines.findIndex((l) => /^臺灣慢活教育學會\s*(感恩祝福|祝福|敬上)/.test(l))
+  const words = !sm && (codeAt >= 0 || signOff >= 0)
   if (sm && sm[1] in SERIES) {
     meta = SERIES[sm[1] as keyof typeof SERIES]
     series = `慢活文字專欄｜${sm[1]}`
-  } else {
-    warnings.push('第一行認不出是哪個專欄系列，請手動選「分類」與填「系列名稱」。')
+  } else if (!words) {
+    warnings.push('第一行認不出是哪個專欄系列，請手動選「分類」與「系列」。')
   }
 
   // ── 結尾：作者區塊（最後一個「編寫 /」之後都是作者資訊） ──
@@ -86,7 +96,9 @@ export function parseFacebookPost(raw: string, today = new Date()): ParsedPost {
   const pageNames: string[] = []
   let imageCredit: string | undefined
   let bodyEnd = lines.length
-  if (credit >= 0) {
+  if (words) {
+    authorName = '臺灣慢活教育學會'
+  } else if (credit >= 0) {
     bodyEnd = credit
     authorName = lines[credit].split(/[\/／]/)[1]?.trim()
     for (const l of lines.slice(credit + 1)) {
@@ -98,13 +110,13 @@ export function parseFacebookPost(raw: string, today = new Date()): ParsedPost {
     warnings.push('找不到「編寫 / 姓名」，請手動選「作者」。')
   }
 
-  // ── 內文：開頭那行之後到作者區塊之前 ──
-  const start = head ? lines.indexOf(head) + 1 : 0
+  // ── 內文：開頭那行（系列或「 標題 」）之後到作者區塊之前；認不出的開頭就是內文第一段 ──
+  const start = head && (sm || bracketTitle) ? lines.indexOf(head) + 1 : 0
   let body = lines.slice(start, bodyEnd)
   while (body.length && (!body[body.length - 1] || isSeparator(body[body.length - 1]))) body.pop()
 
   // 標題：明寫的「跟著X學慢活——……」、《書名號標題》，或「X年X月份，我們來認識「X」字」
-  let title = ''
+  let title = words ? bracketTitle ?? (code ? `慢慢呼吸，慢慢${code}，很好` : '') : ''
   let month: number | undefined
   let year: number | undefined
   const titleAt = body.findIndex((l) => /^跟著.{1,4}學慢活\s*[—–\-－]{1,3}/.test(l) || /^《.+》$/.test(l))
@@ -166,6 +178,11 @@ export function parseFacebookPost(raw: string, today = new Date()): ParsedPost {
       continue
     }
     for (const t of texts) {
+      // 慢活小語的落款「臺灣慢活教育學會 感恩祝福」→ 註解小字
+      if (words && /^臺灣慢活教育學會/.test(t)) {
+        paragraphs.push({ kind: 'text', text: t.replace(/^臺灣慢活教育學會\s*/, '臺灣慢活教育學會　'), style: 'note' })
+        continue
+      }
       if (isMiniHeading(t)) {
         paragraphs.push({ kind: 'text', text: t, style: 'h4' })
         continue
@@ -191,13 +208,15 @@ export function parseFacebookPost(raw: string, today = new Date()): ParsedPost {
   }
   if (excerpt.length > 120) excerpt = excerpt.slice(0, 118) + '……'
 
-  const tags = [meta?.prefix, '慢活文字專欄'].filter(Boolean) as string[]
+  const tags = words
+    ? ['慢活小語', '慢慢呼吸', code].filter(Boolean) as string[]
+    : ([meta?.prefix, '慢活文字專欄'].filter(Boolean) as string[])
 
   return {
     title,
     series,
-    seriesKey: meta?.key,
-    category: meta?.category ?? 'other',
+    seriesKey: words ? 'words' : meta?.key,
+    category: words ? 'words' : meta?.category ?? 'other',
     accent: meta?.accent ?? 'sage',
     authorName,
     pageNames,

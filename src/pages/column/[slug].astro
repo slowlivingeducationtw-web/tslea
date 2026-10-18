@@ -6,7 +6,7 @@ import PortableText from '../../components/PortableText.astro'
 import ArticleCard from '../../components/ArticleCard.astro'
 import SideList, { type SideGroup } from '../../components/SideList.astro'
 import { sanity, Q, imageUrl, imageDims, fetchOne } from '../../lib/sanity'
-import { CATEGORIES, categoryOf, dateText, getArticles, seriesLabel, type SeriesDef } from '../../lib/column'
+import { CATEGORIES, categoryOf, dateText, getArticles, getColumnItems, seriesLabel, type SeriesDef } from '../../lib/column'
 
 export async function getStaticPaths() {
   const slugs = await sanity.fetch<string[]>(Q.articleSlugs)
@@ -21,22 +21,28 @@ const site = 'https://slowlivingeducation.org'
 const cover = imageUrl(a.cover?.image, 1600)
 const coverDims = imageDims(a.cover?.image)
 const cat = categoryOf(a.category)
-const [all, columnPage] = await Promise.all([
+const [all, items, columnPage] = await Promise.all([
   getArticles(),
+  getColumnItems(), // 左側列表多列「活動回顧」，點了回到活動頁
   fetchOne<{ series?: SeriesDef[] }>(Q.columnPage, {}, '慢活專欄頁面'),
 ])
 
-// 左側列表：依分類分組（新的在前），每組最多 8 篇，目前這篇一定列出
+// 左側列表：依分類分組（新的在前，含活動回顧），每組最多 8 篇，目前這篇一定列出
 const SIDE_MAX = 8
 const side: SideGroup[] = CATEGORIES.map((c) => {
-  const items = all.filter((x) => x.category === c.value)
-  const shown = items.slice(0, SIDE_MAX)
-  const self = items.find((x) => x.slug === a.slug)
+  const inCat = items.filter((x) => x.category === c.value)
+  const shown = inCat.slice(0, SIDE_MAX)
+  const self = inCat.find((x) => !x.href && x.slug === a.slug)
   if (self && !shown.includes(self)) shown.push(self)
   return {
     title: c.label,
-    items: shown.map((x) => ({ href: `/column/${x.slug}`, title: x.title, meta: dateText(x.publishedAt), current: x.slug === a.slug })),
-    moreHref: items.length > shown.length ? `/column?cat=${c.value}` : undefined,
+    items: shown.map((x) => ({
+      href: x.href ?? `/column/${x.slug}`,
+      title: x.title,
+      meta: dateText(x.publishedAt),
+      current: !x.href && x.slug === a.slug,
+    })),
+    moreHref: inCat.length > shown.length ? `/column?cat=${c.value}` : undefined,
   }
 }).filter((g) => g.items.length > 0)
 

@@ -29,6 +29,11 @@ export function buildBody(p: ParsedPost, figures: Figure[]) {
     if (p.imageCredit) row.caption = p.imageCredit
     return [...text, row]
   }
+  // 慢活小語：圖片（「慢慢呼吸／慢慢○○／很好」那張）放在結尾那三行前面，同〈真實，不虛〉
+  if (figures.length === 1 && p.category === 'words') {
+    const at = text.findIndex((b) => b._type === 'verse' && /^慢慢呼吸/.test(b.text))
+    if (at >= 0) return [...text.slice(0, at), figures[0], ...text.slice(at)]
+  }
   if (figures.length === 1) return [...text, figures[0]]
   const out = [...text]
   figures.forEach((f, i) => {

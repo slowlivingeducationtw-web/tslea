@@ -52,7 +52,7 @@ export const event = defineType({
       type: 'string',
       group: 'basic',
       description: '顯示在活動卡片最上方。活動日期過了之後就不再顯示。',
-      options: { list: SIGNUP, layout: 'radio' },
+      options: { list: SIGNUP },
     }),
     defineField({
       name: 'signupUrl',

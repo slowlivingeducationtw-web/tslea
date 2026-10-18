@@ -1,5 +1,5 @@
 import { defineField, defineType } from 'sanity'
-import { CATEGORIES, ACCENTS } from '../shared'
+import { CATEGORIES, ACCENTS, SERIES } from '../shared'
 
 export const article = defineType({
   name: 'article',
@@ -7,7 +7,7 @@ export const article = defineType({
   type: 'document',
   groups: [
     { name: 'content', title: '內容', default: true },
-    { name: 'meta', title: '分類與作者' },
+    { name: 'meta', title: '標籤與色調' },
     { name: 'seo', title: '搜尋與分享' },
   ],
   fields: [
@@ -17,6 +17,40 @@ export const article = defineType({
       type: 'string',
       group: 'content',
       validation: (r) => r.required(),
+    }),
+    defineField({
+      name: 'publishedAt',
+      title: '發布日期',
+      type: 'date',
+      group: 'content',
+      options: { dateFormat: 'YYYY-MM-DD' },
+      initialValue: () => new Date().toISOString().slice(0, 10),
+      validation: (r) => r.required(),
+    }),
+    defineField({
+      name: 'category',
+      title: '分類',
+      type: 'string',
+      group: 'content',
+      description: '決定文章出現在專欄頁哪個篩選分類下。',
+      options: { list: CATEGORIES },
+      validation: (r) => r.required(),
+    }),
+    defineField({
+      name: 'author',
+      title: '作者',
+      type: 'reference',
+      to: [{ type: 'author' }],
+      group: 'content',
+      validation: (r) => r.required(),
+    }),
+    defineField({
+      name: 'series',
+      title: '系列（選填）',
+      type: 'string',
+      group: 'content',
+      description: '每月固定的專欄才選；慢活小語、單篇文章留空。要新增系列請找資訊總監。',
+      options: { list: SERIES },
     }),
     defineField({
       name: 'slug',
@@ -59,39 +93,6 @@ export const article = defineType({
       description: '顯示在文章最後。例：作者的 Facebook 粉專。',
     }),
 
-    defineField({
-      name: 'category',
-      title: '分類',
-      type: 'string',
-      group: 'meta',
-      description: '決定文章出現在專欄頁哪個篩選分類下。',
-      options: { list: CATEGORIES, layout: 'radio' },
-      validation: (r) => r.required(),
-    }),
-    defineField({
-      name: 'series',
-      title: '系列名稱（選填）',
-      type: 'string',
-      group: 'meta',
-      description: '同一個專欄系列的標記。例：慢活文字專欄｜每月一味',
-    }),
-    defineField({
-      name: 'author',
-      title: '作者',
-      type: 'reference',
-      to: [{ type: 'author' }],
-      group: 'meta',
-      validation: (r) => r.required(),
-    }),
-    defineField({
-      name: 'publishedAt',
-      title: '發布日期',
-      type: 'date',
-      group: 'meta',
-      options: { dateFormat: 'YYYY-MM-DD' },
-      initialValue: () => new Date().toISOString().slice(0, 10),
-      validation: (r) => r.required(),
-    }),
     defineField({
       name: 'tags',
       title: '標籤',

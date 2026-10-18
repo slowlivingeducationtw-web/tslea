@@ -8,6 +8,7 @@ export const CATEGORIES = [
   { value: 'art', label: '藝術陪伴', tone: 'clay', icon: '🎨' },
   { value: 'eco', label: '生態永續', tone: 'leaf', icon: '🌏' },
   { value: 'travel', label: '慢旅共學', tone: 'forest', icon: '🚂' },
+  { value: 'words', label: '慢活小語', tone: 'leaf', icon: '🍃' },
   { value: 'other', label: '其他', tone: 'leaf', icon: '✍️' },
   // 只有網站有、後台文章選不到：專欄頁把有回顧的活動也列進來（getColumnItems），點了回到原本的活動頁
   { value: 'recap', label: '活動回顧', tone: 'clay', icon: '📸' },
