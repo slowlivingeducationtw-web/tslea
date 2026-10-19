@@ -84,7 +84,7 @@ const { slides, interval = 6000 } = Astro.props
     // ── 背景影片：輪到那一頁才載入 YouTube（靜音、循環指定片段）；減少動態或省流量模式不載入 ──
     const saveData = (navigator as any).connection?.saveData === true
     const canVideo = !reduce && !saveData
-    type Vid = { box: HTMLElement; frame?: HTMLIFrameElement; start: number; end: number; state?: number; seeking?: boolean; showTimer?: number }
+    type Vid = { box: HTMLElement; frame?: HTMLIFrameElement; start: number; end: number; state?: number; seeking?: boolean; showTimer?: number; played?: boolean }
     const vids = new Map<HTMLElement, Vid>()
     slides.forEach((s) => {
       const box = s.querySelector<HTMLElement>('.hero-video')
@@ -94,7 +94,12 @@ const { slides, interval = 6000 } = Astro.props
     // 所以影片只在「確定正在播放」一小段時間後才淡入，其他狀態立刻退回照片，訪客就不會看到那些圖示。
     const reveal = (v: Vid) => {
       if (v.showTimer || v.box.classList.contains('is-playing')) return
-      v.showTimer = window.setTimeout(() => { v.showTimer = undefined; v.box.classList.add('is-playing') }, 900)
+      v.showTimer = window.setTimeout(() => {
+        v.showTimer = undefined
+        v.box.classList.add('is-playing')
+        // 這次輪到它時第一次播起來：改成停留到片段播完
+        if (!v.played && vids.get(slides[current]) === v) { v.played = true; schedule() }
+      }, 900)
     }
     const conceal = (v: Vid) => {
       window.clearTimeout(v.showTimer)
@@ -167,6 +172,7 @@ const { slides, interval = 6000 } = Astro.props
         if (on) s.removeAttribute('aria-hidden')
         else s.setAttribute('aria-hidden', 'true')
       })
+      vids.forEach((v) => { v.played = false })
       pauseVideos(slides[current])
       if (!userPaused) playVideo(slides[current])
       dots.forEach((d, i) => (i === current ? d.setAttribute('aria-current', 'true') : d.removeAttribute('aria-current')))
@@ -174,9 +180,10 @@ const { slides, interval = 6000 } = Astro.props
     function schedule() {
       window.clearTimeout(timer)
       if (userPaused || hover || document.hidden) return
-      // 有背景影片的那一頁，停留到片段播完（最多 25 秒）
+      // 有背景影片、而且真的播起來的那一頁，停留到片段播完（最多 25 秒）；
+      // 影片沒播起來（手機省電模式、瀏覽器擋自動播放）就照一般秒數換頁，不要對著靜態照片乾等
       const v = canVideo ? vids.get(slides[current]) : undefined
-      const wait = v && v.end > v.start ? Math.min(Math.max(interval, (v.end - v.start) * 1000), 25000) : interval
+      const wait = v?.played && v.end > v.start ?Math.min(Math.max(interval, (v.end - v.start) * 1000), 25000) : interval
       timer = window.setTimeout(() => { show(current + 1); schedule() }, wait)
     }
     function setPaused(p: boolean) {
@@ -206,9 +213,11 @@ const { slides, interval = 6000 } = Astro.props
       show(current + (dx < 0 ? 1 : -1))
       schedule()
     }, { passive: true })
-    root.addEventListener('mouseenter', () => { hover = true; schedule() })
-    root.addEventListener('mouseleave', () => { hover = false; schedule() })
-    root.addEventListener('focusin', () => { hover = true; schedule() })
+    // 只認真正的滑鼠：手機點一下也會觸發 mouseenter，卻永遠等不到 mouseleave，輪播就停住不動
+    root.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') { hover = true; schedule() } })
+    root.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') { hover = false; schedule() } })
+    // 鍵盤聚焦才停（手機點圓點也會聚焦，不算）
+    root.addEventListener('focusin', (e) => { if ((e.target as HTMLElement).matches?.(':focus-visible')) { hover = true; schedule() } })
     root.addEventListener('focusout', () => { hover = false; schedule() })
     document.addEventListener('visibilitychange', schedule)
 
