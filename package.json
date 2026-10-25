@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "test": "tsx tests/i18n.test.mts"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
@@ -16,6 +17,7 @@
     "astro": "^7.3.3"
   },
   "devDependencies": {
+    "tsx": "^4.23.15",
     "wrangler": "^4.135.0"
   }
 }

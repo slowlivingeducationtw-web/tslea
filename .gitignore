@@ -18,3 +18,4 @@ scripts/out/
 .env
 .env.*
 !.env.example
+.superpowers/
