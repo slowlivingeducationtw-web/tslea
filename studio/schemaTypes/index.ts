@@ -1,3 +1,4 @@
+import { withTranslations } from './i18n'
 import { link } from './objects/link'
 import { verse } from './objects/verse'
 import { figure } from './objects/figure'
@@ -43,8 +44,10 @@ export const SINGLETONS = [
   'boardAreaPage',
 ] as const
 
+// 有英文版的文件都包上 withTranslations（可翻欄位清單在 i18n.ts）
 export const schemaTypes = [
   link, verse, figure, imageRow, richText, navLink, navSubLink, simpleText, photo, actionCard, videoEmbed,
-  article, author, person, event, planItem, activityType,
-  siteSettings, navigation, homePage, aboutPage, joinPage, partnerPage, eventsPage, columnPage, themesSection, plansPage, donatePage, contactPage, boardAreaPage,
+  ...[article, author, person, event, planItem, activityType,
+    siteSettings, navigation, homePage, aboutPage, joinPage, partnerPage, eventsPage, columnPage, themesSection, plansPage, donatePage, contactPage, boardAreaPage,
+  ].map(withTranslations),
 ]

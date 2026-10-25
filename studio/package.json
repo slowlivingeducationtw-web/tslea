@@ -9,7 +9,8 @@
     "deploy": "sanity deploy",
     "export": "sanity dataset export production",
     "test:structure": "tsx test-structure.mts",
-    "test:import": "tsx test-import.mts"
+    "test:import": "tsx test-import.mts",
+    "test:i18n": "tsx test-i18n.mts"
   },
   "dependencies": {
     "@sanity/icons": "^5.2.2",
