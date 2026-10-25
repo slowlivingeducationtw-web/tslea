@@ -50,5 +50,42 @@ for (const [name, { fields }] of Object.entries(TRANSLATABLE)) {
   if (sourceHash(ev, 'event') !== sourceHash({ ...ev, slug: { current: 'b' } }, 'event')) fail('改了不可翻欄位，指紋卻變了')
 }
 
+// ── 翻譯腳本的規則（migrations/i18n/lib.ts）──
+{
+  const { planPatches, checkTranslationShape, statusOf } = await import('./migrations/i18n/lib.ts')
+  const pub = { _id: 'aboutPage', _type: 'aboutPage', title: '認識學會', lead: '慢' }
+  const file = { _id: 'aboutPage', _type: 'aboutPage', lang: 'en', sourceHash: sourceHash(pub, 'aboutPage'), translation: { title: 'About', reviewed: false, sourceHash: sourceHash(pub, 'aboutPage') } }
+
+  const both = planPatches(file, pub, { ...pub, _id: 'drafts.aboutPage' }, { force: false })
+  if (both.skip || both.patches.map((p) => p.id).join() !== 'aboutPage,drafts.aboutPage') fail(`有草稿時要寫兩份：${JSON.stringify(both)}`)
+  if (JSON.stringify(both.patches[0].set) !== JSON.stringify({ 'translations.en': file.translation })) fail('patch 內容不對')
+  const one = planPatches(file, pub, null, { force: false })
+  if (one.skip || one.patches.length !== 1) fail('沒草稿時只寫一份')
+  if (!planPatches(file, { ...pub, lead: '快' }, null, { force: false }).skip) fail('中文改過要略過')
+  const reviewed = { ...pub, translations: { en: { title: 'About us', reviewed: true } } }
+  if (!planPatches(file, reviewed, null, { force: false }).skip) fail('已校對要略過')
+  if (planPatches(file, reviewed, null, { force: true }).skip) fail('force 時不略過已校對')
+  if (!planPatches(file, null, null, { force: false }).skip) fail('找不到文件要略過')
+
+  const src = { title: '標題', links: [{ _key: 'a', _type: 'navLink', label: '加入', href: '/join' }], cover: { _type: 'figure', image: { asset: { _ref: 'image-1' } }, alt: '圖' } }
+  const ok = { title: 'Title', links: [{ _key: 'a', _type: 'navLink', label: 'Join', href: '/join' }], cover: { _type: 'figure', image: { asset: { _ref: 'image-1' } }, alt: 'Photo' } }
+  const issues = (x: any) => checkTranslationShape(src, x)
+  if (issues(ok).length) fail(`只改文字不該有問題：${issues(ok)}`)
+  const clone = () => JSON.parse(JSON.stringify(ok))
+  const badHref = clone(); badHref.links[0].href = '/en/join'
+  const fewer = clone(); fewer.links = []
+  const badKey = clone(); badKey.links[0]._key = 'b'
+  const noImage = clone(); delete noImage.cover.image.asset._ref
+  for (const [name, x] of [['改了 href', badHref], ['少一個項目', fewer], ['_key 不同', badKey], ['少了圖片', noImage]] as const)
+    if (issues(x).length !== 1) fail(`${name} 應回報一個問題，得到 ${JSON.stringify(issues(x))}`)
+
+  const st = (tr: any, doc: any = pub) => statusOf({ ...doc, translations: tr && { en: tr } }, 'en')
+  const h = sourceHash(pub, 'aboutPage')
+  if (st(undefined) !== 'untranslated') fail('沒有譯文應為 untranslated')
+  if (st({ title: 'About', sourceHash: 'x' }) !== 'stale') fail('指紋不符應為 stale')
+  if (st({ title: 'About', sourceHash: h }) !== 'unreviewed') fail('未校對應為 unreviewed')
+  if (st({ title: 'About', sourceHash: h, reviewed: true }) !== 'ok') fail('已校對應為 ok')
+}
+
 console.log(failed ? `${failed} 項不符` : '全部通過')
 process.exit(failed ? 1 : 0)

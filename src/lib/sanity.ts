@@ -1,6 +1,7 @@
 import { createClient } from '@sanity/client'
 import { createImageUrlBuilder } from '@sanity/image-url'
 import { LANGS } from './i18n'
+import { overlayFetch } from './overlay'
 
 // dataset 是私有的，所以查詢一定要帶 token。
 // 這段只在「建置時」執行（Astro 產生靜態 HTML 的那一刻），
@@ -14,7 +15,7 @@ if (!token) {
   )
 }
 
-export const sanity = createClient({
+const client = createClient({
   projectId: '2lbk0ta8',
   dataset: 'production',
   apiVersion: '2026-01-01',
@@ -25,7 +26,13 @@ export const sanity = createClient({
   perspective: import.meta.env.SANITY_PREVIEW_DRAFTS === '1' ? 'drafts' : 'published',
 })
 
-const builder = createImageUrlBuilder(sanity)
+// 本機預覽還沒寫進後台的譯文時（I18N_OVERLAY=1），查詢改在本機執行，見 overlay.ts
+export const sanity: Pick<typeof client, 'fetch'> =
+  import.meta.env.I18N_OVERLAY === '1'
+    ? { fetch: ((query: string, params?: Record<string, unknown>) => overlayFetch(client, query, params)) as typeof client.fetch }
+    : client
+
+const builder = createImageUrlBuilder(client)
 
 /** 產生 Sanity CDN 的圖片網址，可指定寬度。 */
 export function imageUrl(source: any, width?: number) {
