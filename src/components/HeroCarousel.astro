@@ -31,9 +31,12 @@ const lang = langOf(Astro.url.pathname)
     <div class={`hero-slide tone-${s.tone}${i === 0 ? ' is-active' : ''}`}
          role="group" aria-roledescription="slide" aria-label={t(lang, 'hero.slide', { n: i + 1, total: slides.length })}
          aria-hidden={i === 0 ? undefined : 'true'}>
+      {/* 沒放照片的影片頁：YouTube 縮圖只給不播影片的訪客（減少動態、省流量）看；
+          會播影片的訪客先看色塊，影片播起來再淡入（縮圖是別的畫面又有黑邊，看起來像卡住） */}
       <Photo src={s.image ?? (s.video ? `https://i.ytimg.com/vi/${s.video.id}/maxresdefault.jpg` : null)}
              alt={s.imageAlt} tone={s.tone === 'forest' ? 'forest' : s.tone}
-             icon="🌳" placeholder={t(lang, 'photo.placeholder')} class="hero-c-media" eager={i === 0} />
+             icon="🌳" placeholder={t(lang, 'photo.placeholder')}
+             class={`hero-c-media${!s.image && s.video ? ' hero-c-poster' : ''}`} eager={i === 0 && !!s.image} />
       {s.video && (
         <div class="hero-video" aria-hidden="true"
              data-yt={s.video.id} data-start={s.video.start} data-end={s.video.end ?? ''}></div>
@@ -88,6 +91,7 @@ const lang = langOf(Astro.url.pathname)
     // ── 背景影片：輪到那一頁才載入 YouTube（靜音、循環指定片段）；減少動態或省流量模式不載入 ──
     const saveData = (navigator as any).connection?.saveData === true
     const canVideo = !reduce && !saveData
+    if (!canVideo) root.classList.add('no-video')
     type Vid = { box: HTMLElement; frame?: HTMLIFrameElement; start: number; end: number; state?: number; seeking?: boolean; showTimer?: number; played?: boolean }
     const vids = new Map<HTMLElement, Vid>()
     slides.forEach((s) => {
@@ -246,6 +250,8 @@ const lang = langOf(Astro.url.pathname)
   }
   .hero-slide.is-active { opacity: 1; visibility: visible; position: relative; min-height: inherit; }
   .hero-slide :global(.hero-c-media) { position: absolute; inset: 0; }
+  .hero-slide :global(.hero-c-poster img) { opacity: 0; }
+  .hero-c.no-video :global(.hero-c-poster img) { opacity: 1; }
   /* 背景影片：蓋滿整個主視覺（16:9 依容器比例放大裁切），稍微放大藏住 YouTube 邊角介面 */
   /* 退回照片時立刻消失（不讓 YouTube 的暫停圖示在淡出時露出來），開始播放時才慢慢淡入 */
   .hero-video { position: absolute; inset: 0; overflow: hidden; container-type: size; opacity: 0; transition: opacity 0.15s linear; pointer-events: none; }
