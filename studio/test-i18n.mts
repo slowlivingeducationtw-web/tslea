@@ -66,6 +66,17 @@ for (const [name, { fields }] of Object.entries(TRANSLATABLE)) {
   if (!planPatches(file, reviewed, null, { force: false }).skip) fail('已校對要略過')
   if (planPatches(file, reviewed, null, { force: true }).skip) fail('force 時不略過已校對')
   if (!planPatches(file, null, null, { force: false }).skip) fail('找不到文件要略過')
+  // 同仁在草稿改了英文、還沒發布：不能被蓋掉
+  const edited = { ...pub, _id: 'drafts.aboutPage', translations: { en: { title: 'About Us (edited)' } } }
+  if (!planPatches(file, pub, edited, { force: false }).skip) fail('草稿裡有同仁改過的英文要略過')
+  if (planPatches(file, pub, edited, { force: true }).skip) fail('force 時不略過草稿的英文')
+  const sameTr = { en: { title: 'Old' } }
+  const same = planPatches(file, { ...pub, translations: sameTr }, { ...pub, _id: 'drafts.aboutPage', translations: sameTr }, { force: false })
+  if (same.skip || same.patches.length !== 2) fail('草稿英文和已發布一樣時兩份都寫')
+  // 寫入時一律未校對、指紋用檔案的
+  const forced = planPatches({ ...file, translation: { ...file.translation, reviewed: true, sourceHash: 'zzz' } }, pub, null, { force: false })
+  const set: any = forced.patches[0]?.set['translations.en']
+  if (set?.reviewed !== false || set?.sourceHash !== file.sourceHash) fail(`寫入時要強制 reviewed:false 與檔案指紋：${JSON.stringify(set)}`)
 
   const src = { title: '標題', links: [{ _key: 'a', _type: 'navLink', label: '加入', href: '/join' }], cover: { _type: 'figure', image: { asset: { _ref: 'image-1' } }, alt: '圖' } }
   const ok = { title: 'Title', links: [{ _key: 'a', _type: 'navLink', label: 'Join', href: '/join' }], cover: { _type: 'figure', image: { asset: { _ref: 'image-1' } }, alt: 'Photo' } }

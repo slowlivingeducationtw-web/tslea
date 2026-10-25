@@ -66,7 +66,7 @@ export function checkTranslationShape(source: unknown, translation: unknown, pat
 
 /**
  * 要寫哪些文件：已發布版一定寫；有草稿也寫，同仁之後發布草稿才不會把譯文洗掉。
- * 翻譯後中文被改過、或已經校對過（未加 force）就略過。
+ * 翻譯後中文被改過、已經校對過、或草稿裡有同仁還沒發布的英文修改（未加 force）就略過。
  */
 export function planPatches(
   file: TranslationFile,
@@ -78,6 +78,10 @@ export function planPatches(
   if (!published) return { skip: '找不到已發布的文件', patches: [] }
   if (file.sourceHash !== sourceHash(published, published._type)) return { skip: '中文在翻譯後被改過，請重新翻譯', patches: [] }
   if (published.translations?.[lang]?.reviewed && !opts.force) return { skip: '已校對，不覆蓋（要覆蓋請加 FORCE=1）', patches: [] }
-  const set = { [`translations.${lang}`]: file.translation }
+  // 草稿裡的英文和已發布的不一樣＝同仁改過還沒發布，不蓋掉
+  if (draft && JSON.stringify(draft.translations?.[lang] ?? null) !== JSON.stringify(published.translations?.[lang] ?? null) && !opts.force)
+    return { skip: '草稿裡有同仁改過、還沒發布的英文，不覆蓋（請同仁先發布或捨棄草稿，要覆蓋請加 FORCE=1）', patches: [] }
+  // 寫入的一律算未校對，指紋用翻譯時記下的
+  const set = { [`translations.${lang}`]: { ...file.translation, reviewed: false, sourceHash: file.sourceHash } }
   return { patches: [published, draft].filter((d): d is Doc => !!d).map((d) => ({ id: d._id, set })) }
 }

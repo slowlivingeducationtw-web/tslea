@@ -92,5 +92,36 @@ eq('中文頁不用英文姓名', displayName({ name: '王小明', nameEn: 'Hsia
   eq('系列中文短名', seriesName('慢活文字專欄｜每月一字', 'zh', true), '每月一字')
 }
 
+// ── 查詢＋合併（groq-js 跑真的查詢，假資料）──
+{
+  const { parse, evaluate } = await import('groq-js')
+  const { Q } = await import('../src/lib/queries.ts')
+  const run = async (q: string, dataset: any[], params: Record<string, unknown> = {}) =>
+    (await evaluate(parse(q, { params }), { dataset, params })).get()
+  const tr = (en: any) => ({ translations: { en } })
+  const events = [
+    { _id: 'e1', _type: 'event', title: '介紹', slug: { current: 'intro' }, dateLabel: '2026 · 09 · 12', sortDate: '2026-09-12', ...tr({ title: 'Intro' }) },
+    { _id: 'e2', _type: 'event', title: '回顧', slug: { current: 'recap' }, dateLabel: '2026 · 09 · 12', sortDate: '2026-09-12',
+      pair: { _type: 'reference', _ref: 'e1' }, recap: [{ _type: 'block', _key: 'b', children: [] }], ...tr({ title: 'Recap' }) },
+    { _id: 'e3', _type: 'event', title: '沒有配對', slug: { current: 'solo' }, dateLabel: '2026 · 01 · 01', sortDate: '2026-01-01', ...tr({ title: 'Solo' }) },
+  ]
+  // 介紹頁的「回顧」連結是反向找出來的；英文版要找到同一筆，沒有配對的不能憑空多出連結
+  const pairOf = async (slug: string, lang: 'zh' | 'en') => localize(await run(Q.event, events, { slug }), lang).pair?.slug ?? null
+  for (const [slug, want] of [['intro', 'recap'], ['recap', 'intro'], ['solo', null]] as const)
+    for (const lang of ['zh', 'en'] as const) eq(`活動 ${slug} 的配對（${lang}）`, await pairOf(slug, lang), want)
+
+  // 英文姓名：後台填了就要查得到
+  const people = [{ _id: 'p1', _type: 'person', name: '王小明', role: '理事', group: 'director', term: 1, order: 1, ...tr({ nameEn: 'Hsiao-Ming Wang', role: 'Director' }) }]
+  const p = localize(await run(Q.people, people), 'en')[0]
+  eq('理監事英文姓名', displayName(p, 'en'), 'Hsiao-Ming Wang')
+  eq('理監事中文姓名不變', displayName(localize(await run(Q.people, people), 'zh')[0], 'zh'), '王小明')
+  const authors = [{ _id: 'a1', _type: 'author', name: '陳玉明', title: '作者', ...tr({ nameEn: 'Yu-Ming Chen', title: 'Author' }) },
+    { _id: 'x1', _type: 'article', title: '文', slug: { current: 's' }, publishedAt: '2026-01-01', author: { _type: 'reference', _ref: 'a1' }, ...tr({ title: 'Post' }) }]
+  const art = localize(await run(Q.article, authors, { slug: 's' }), 'en')
+  eq('作者英文姓名', displayName(art.author, 'en'), 'Yu-Ming Chen')
+  const recapAuthor = [{ ...authors[0] }, { ...events[1], recapAuthor: { _type: 'reference', _ref: 'a1' } }, events[0]]
+  eq('活動回顧作者英文姓名', displayName(localize(await run(Q.event, recapAuthor, { slug: 'recap' }), 'en').recapAuthor, 'en'), 'Yu-Ming Chen')
+}
+
 console.log(failed ? `${failed} 項不符` : '全部通過')
 process.exit(failed ? 1 : 0)
