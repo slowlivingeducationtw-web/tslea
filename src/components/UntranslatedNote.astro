@@ -1,0 +1,12 @@
+---
+// 英文頁還沒有譯文時，在內容最上方說明下面顯示的是中文原文。中文頁不顯示。
+import { langOf } from '../lib/i18n'
+import { t } from '../lib/ui'
+
+type Props = { show: boolean }
+const lang = langOf(Astro.url.pathname)
+const { show } = Astro.props
+---
+{lang !== 'zh' && show && (
+  <div class="container"><p class="untranslated-note" lang="en">{t(lang, 'untranslated.note')}</p></div>
+)}

@@ -2,9 +2,12 @@
 // 專欄文章卡片：和活動卡片同樣的版型，整張可點進文章頁（/column/{slug}）；活動回顧則點進活動頁。
 import { imageUrl } from '../lib/sanity'
 import { categoryOf, dateText, type Article } from '../lib/column'
+import { displayName, langOf, localizePath } from '../lib/i18n'
+import { catLabel, seriesName, t } from '../lib/ui'
 
 type Props = { article: Article }
 const { article: a } = Astro.props
+const lang = langOf(Astro.url.pathname)
 const cat = categoryOf(a.category)
 const also = (a.alsoIn ?? []).filter((v) => v !== a.category).map(categoryOf)
 const cover = imageUrl(a.cover?.image, 900)
@@ -17,14 +20,15 @@ const cover = imageUrl(a.cover?.image, 900)
   )}
   <div class="card-body">
     <div class="post-top">
-      <span class={`chip tone-${cat.tone}`}>{cat.label}</span>
-      {also.map((c) => <span class={`chip tone-${c.tone}`}>{c.label}</span>)}
-      {a.series && <span class="post-series">{a.series}</span>}
+      <span class={`chip tone-${cat.tone}`}>{catLabel(cat.value, lang)}</span>
+      {also.map((c) => <span class={`chip tone-${c.tone}`}>{catLabel(c.value, lang)}</span>)}
+      {a.series && <span class="post-series">{seriesName(a.series, lang)}</span>}
+      {a._untranslated && <span class="chip chip-untranslated">{t(lang, 'untranslated.chip')}</span>}
     </div>
-    <p class="post-date">{dateText(a.publishedAt)}{a.author ? `・${a.author.name}` : ''}</p>
-    <h3 class="card-title"><a class="post-link" href={a.href ?? `/column/${a.slug}`}>{a.title}</a></h3>
+    <p class="post-date">{dateText(a.publishedAt)}{a.author ? `・${displayName(a.author, lang)}` : ''}</p>
+    <h3 class="card-title"><a class="post-link" href={localizePath(lang, a.href ?? `/column/${a.slug}`)}>{a.title}</a></h3>
     {a.excerpt && <p class="card-text">{a.excerpt}</p>}
-    <div class="card-foot"><span class="card-more" aria-hidden="true">閱讀全文 →</span></div>
+    <div class="card-foot"><span class="card-more" aria-hidden="true">{t(lang, 'card.readMore')} →</span></div>
   </div>
 </article>
 

@@ -1,6 +1,6 @@
 // 語言小工具的測試：npm test
 import { deepStrictEqual } from 'node:assert'
-import { langOf, stripLang, localizePath, localize } from '../src/lib/i18n.ts'
+import { langOf, stripLang, localizePath, localize, displayName } from '../src/lib/i18n.ts'
 
 let failed = 0
 const eq = (name: string, got: unknown, want: unknown) => {
@@ -53,6 +53,40 @@ eq('陣列裡的文件', localize([{ t: '一', i18n: { en: { t: 'One' } } }], 'e
 eq('接受 translations 原始欄位',
   localize({ title: '慢', translations: { en: { title: 'Slow', reviewed: true } } }, 'en'),
   { title: 'Slow', _untranslated: false })
+
+// ── 姓名：英文版有填英文姓名才用 ──
+eq('英文姓名', displayName({ name: '王小明', nameEn: 'Hsiao-Ming Wang' }, 'en'), 'Hsiao-Ming Wang')
+eq('英文姓名留空用中文', displayName({ name: '王小明', nameEn: '' }, 'en'), '王小明')
+eq('中文頁不用英文姓名', displayName({ name: '王小明', nameEn: 'Hsiao-Ming Wang' }, 'zh'), '王小明')
+
+// ── 介面文字 ──
+{
+  const { UI, catLabel, seriesName } = await import('../src/lib/ui.ts')
+  const { readFileSync } = await import('node:fs')
+  // column.ts 會連 Sanity，不能直接 import；從原始碼讀出分類值
+  const col = readFileSync(new URL('../src/lib/column.ts', import.meta.url), 'utf8')
+  const catBlock = col.slice(col.indexOf('export const CATEGORIES'), col.indexOf('] as const', col.indexOf('export const CATEGORIES')))
+  const CATEGORIES = [...catBlock.matchAll(/value: '([^']+)'/g)].map((m) => ({ value: m[1] }))
+  if (CATEGORIES.length < 5) { failed++; console.log('✗ 讀不到 CATEGORIES') }
+  const zh = Object.keys(UI.zh).sort(), en = Object.keys(UI.en).sort()
+  eq('UI 中英鍵相同', en, zh)
+  for (const lang of ['zh', 'en'] as const)
+    for (const [k, v] of Object.entries(UI[lang])) if (!String(v).trim()) { failed++; console.log(`✗ UI.${lang}.${k} 是空的`) }
+  const cjk = /[㐀-鿿]/
+  for (const c of CATEGORIES) if (cjk.test(catLabel(c.value, 'en'))) { failed++; console.log(`✗ 分類 ${c.value} 沒有英文`) }
+  eq('分類中文照舊', catLabel('health', 'zh'), '身心健康')
+  // 後台的每個系列都要有英文名
+  const shared = readFileSync(new URL('../studio/schemaTypes/shared.ts', import.meta.url), 'utf8')
+  const seriesBlock = shared.slice(shared.indexOf('export const SERIES'), shared.indexOf(']', shared.indexOf('export const SERIES')))
+  const values = [...seriesBlock.matchAll(/value: '([^']+)'/g)].map((m) => m[1])
+  if (!values.length) { failed++; console.log('✗ 讀不到 SERIES') }
+  for (const v of values) {
+    if (cjk.test(seriesName(v, 'en'))) { failed++; console.log(`✗ 系列 ${v} 沒有英文`) }
+    if (cjk.test(seriesName(v, 'en', true))) { failed++; console.log(`✗ 系列 ${v} 沒有英文短名`) }
+  }
+  eq('系列中文全名', seriesName('慢活文字專欄｜每月一字', 'zh'), '慢活文字專欄｜每月一字')
+  eq('系列中文短名', seriesName('慢活文字專欄｜每月一字', 'zh', true), '每月一字')
+}
 
 console.log(failed ? `${failed} 項不符` : '全部通過')
 process.exit(failed ? 1 : 0)

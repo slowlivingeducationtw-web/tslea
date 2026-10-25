@@ -2,8 +2,11 @@
 import { toHTML } from '@portabletext/to-html'
 import { imageUrl, imageDims } from '../lib/sanity'
 import { videoHtml } from '../lib/video'
+import { langOf, localizePath } from '../lib/i18n'
+import { t } from '../lib/ui'
 
 const { value, class: className = '' } = Astro.props
+const lang = langOf(Astro.url.pathname)
 
 const esc = (s: string) =>
   String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -15,7 +18,7 @@ function figureHtml(v: any, inRow = false) {
   const dim = d ? ` width="${d.width}" height="${d.height}"` : ''
   // 點圖片看大圖：連到 2000px 版本；有 JS 時在頁面上開燈箱，沒有 JS 就直接開圖檔
   const big = imageUrl(v.image, 2000)
-  const img = `<a class="pt-zoom" href="${esc(big!)}" aria-label="放大圖片${v.alt ? `：${esc(v.alt)}` : ''}"><img src="${esc(src)}" alt="${esc(v.alt || '')}" loading="lazy" decoding="async"${dim}></a>`
+  const img = `<a class="pt-zoom" href="${esc(big!)}" aria-label="${t(lang, 'pt.zoom')}${v.alt ? `${lang === 'zh' ? '：' : ': '}${esc(v.alt)}` : ''}"><img src="${esc(src)}" alt="${esc(v.alt || '')}" loading="lazy" decoding="async"${dim}></a>`
   if (inRow) return img
   return `<figure class="pt-figure">${img}${
     v.caption ? `<figcaption class="pt-caption">${esc(v.caption)}</figcaption>` : ''
@@ -36,7 +39,8 @@ const html = value
         marks: {
           highlight: ({ children }) => `<mark>${children}</mark>`,
           link: ({ children, value: v }) => {
-            const href = esc(v?.href || '')
+            // 站內連結在英文頁加上 /en
+            const href = esc(localizePath(lang, v?.href || ''))
             const ext = /^https?:\/\//.test(href)
             return `<a href="${href}"${ext ? ' target="_blank" rel="noopener"' : ''}>${children}</a>`
           },
@@ -44,7 +48,7 @@ const html = value
         types: {
           verse: ({ value: v }) => `<div class="pt-verse">${esc(v.text)}</div>`,
           figure: ({ value: v }) => figureHtml(v),
-          videoEmbed: ({ value: v }) => videoHtml(v.url, v.caption || '影片', v.caption),
+          videoEmbed: ({ value: v }) => videoHtml(v.url, v.caption || t(lang, 'pt.video'), v.caption),
           imageRow: ({ value: v }) => {
             const imgs = (v.images || []).map((i: any) => figureHtml(i, true)).join('')
             return `<div><div class="pt-row">${imgs}</div>${
@@ -57,7 +61,7 @@ const html = value
     })
   : ''
 ---
-<div class={`pt ${className}`.trim()} set:html={html} />
+<div class={`pt ${className}`.trim()} data-close-label={t(lang, 'pt.close')} set:html={html} />
 
 <script>
   // 燈箱：點內文圖片放大，點任何地方、按 Esc 或「關閉」收起；手機可再用兩指縮放
@@ -66,7 +70,8 @@ const html = value
     if (!box) {
       box = document.createElement('dialog')
       box.className = 'pt-lightbox'
-      box.innerHTML = '<button type="button" class="pt-lightbox-close">關閉 ✕</button><img alt="">'
+      box.innerHTML = '<button type="button" class="pt-lightbox-close"></button><img alt="">'
+      box.querySelector('button')!.textContent = document.querySelector<HTMLElement>('.pt[data-close-label]')?.dataset.closeLabel ?? '✕'
       box.addEventListener('click', () => box!.close())
       document.body.append(box)
     }

@@ -1,6 +1,7 @@
 // 慢活專欄文章：來自後台「內容 → 專欄文章」。列表頁與單篇頁共用。
 import { sanity, Q } from './sanity'
 import { getEvents } from './events'
+import { localize, type Lang } from './i18n'
 
 // 分類與後台 studio/schemaTypes/shared.ts 的 CATEGORIES 一致；tone 是卡片色塊（site.css 的設計變數）
 export const CATEGORIES = [
@@ -26,11 +27,12 @@ export type Article = {
   publishedAt: string
   tags?: string[]
   cover?: { image?: any; alt?: string; caption?: string }
-  author?: { name: string; title?: string } | null
+  author?: { name: string; nameEn?: string; title?: string } | null
   /** 不是專欄文章時的連結（活動回顧 → /events/{slug}） */
   href?: string
   /** 同時也算在這些分類底下（活動回顧勾了「也放進專欄分類」） */
   alsoIn?: string[]
+  _untranslated?: boolean
 }
 
 /** 這篇算不算在某個分類底下（主分類或「也放進」的分類） */
@@ -74,8 +76,8 @@ export function seriesOf(articles: Article[], defs: SeriesDef[] = []) {
 export const seriesHref = (s: string) => `/column?series=${encodeURIComponent(s)}`
 
 /** 專欄頁的完整清單：專欄文章＋有回顧的活動（分類「活動回顧」），依日期新到舊 */
-export async function getColumnItems() {
-  const [articles, { list }] = await Promise.all([getArticles(), getEvents()])
+export async function getColumnItems(lang: Lang = 'zh') {
+  const [articles, { list }] = await Promise.all([getArticles(lang), getEvents(lang)])
   const recaps: Article[] = list
     .filter((e) => e.hasRecap)
     .map((e) => ({
@@ -88,8 +90,9 @@ export async function getColumnItems() {
       cover: e.cover,
       author: e.recapAuthor,
       alsoIn: e.columnCategories,
+      _untranslated: e._untranslated,
     }))
   return [...articles, ...recaps].sort((x, y) => y.publishedAt.localeCompare(x.publishedAt))
 }
 
-export const getArticles = () => sanity.fetch<Article[]>(Q.articles)
+export const getArticles = async (lang: Lang = 'zh') => localize(await sanity.fetch<Article[]>(Q.articles), lang)

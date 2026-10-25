@@ -1,5 +1,7 @@
 ---
 // 有圖片就顯示圖片；沒有就顯示柔和色塊與「照片待補」說明，日後補上 src 即可替換。
+import { langOf } from '../lib/i18n'
+import { t } from '../lib/ui'
 type Props = {
   src?: string | null
   alt?: string
@@ -18,7 +20,7 @@ const {
   height,
   tone = 'leaf',
   icon = '🌱',
-  placeholder = '照片待補',
+  placeholder = t(langOf(Astro.url.pathname), 'photo.placeholder'),
   class: className = '',
   eager = false,
 } = Astro.props

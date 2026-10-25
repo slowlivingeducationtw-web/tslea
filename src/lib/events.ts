@@ -1,6 +1,8 @@
 // 活動資料：來自後台「內容 → 活動」。一個活動一頁（/events/{slug}），
 // 活動前是宣傳與報名，辦完後在同一筆補上回顧。首頁「近期活動」與 /events 共用同一份清單。
 import { sanity, Q } from './sanity'
+import { localize, type Lang } from './i18n'
+import { t, type UiKey } from './ui'
 
 export type CmsEvent = {
   title: string
@@ -13,13 +15,16 @@ export type CmsEvent = {
   tag?: string
   cover?: { image?: any; alt?: string; caption?: string }
   hasRecap?: boolean
-  recapAuthor?: { name: string; title?: string } | null
+  recapAuthor?: { name: string; nameEn?: string; title?: string } | null
   /** 有回顧時，除了「活動回顧」也列在這些專欄分類底下 */
   columnCategories?: string[]
   videoUrl?: string
   activityType?: { title: string; slug: string } | null
   signupStatus?: 'open' | 'free' | 'planning' | 'full'
   signupUrl?: string
+  _untranslated?: boolean
+  /** 由中文的日期文字算好的階段（譯文的日期文字可能是別的格式），見 withPhase */
+  _phase?: EventPhase
 }
 
 export type EventPhase = 'current' | 'past'
@@ -32,32 +37,34 @@ const SPECIFIC_DATE = /^\s*\d{4}\s*[·.\-/]\s*\d{1,2}\s*[·.\-/]\s*\d{1,2}/
 // 以台灣時間的「今天」判斷（網站在建置時產生，後台發布會觸發重新建置）
 const today = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10)
 
-export function phaseOf(e: Pick<CmsEvent, 'dateLabel' | 'sortDate'>): EventPhase {
-  return SPECIFIC_DATE.test(e.dateLabel) && e.sortDate < today ? 'past' : 'current'
+export function phaseOf(e: Pick<CmsEvent, 'dateLabel' | 'sortDate' | '_phase'>): EventPhase {
+  return e._phase ?? (SPECIFIC_DATE.test(e.dateLabel) && e.sortDate < today ? 'past' : 'current')
 }
+
+/** 合併譯文之前先用中文資料算好階段 */
+export const withPhase = <T extends Pick<CmsEvent, 'dateLabel' | 'sortDate'>>(e: T): T & { _phase: EventPhase } => ({ ...e, _phase: phaseOf(e) })
 
 /** 卡片與活動頁上的狀態標籤：還沒結束看「報名狀態」；結束了看有沒有回顧 */
 export type Badge = { kind: 'open' | 'free' | 'planning' | 'full' | 'recap' | 'ended'; label: string }
-const SIGNUP_LABEL = { open: '開放報名中', free: '隨時加入', planning: '籌備中', full: '已額滿' } as const
 
-export function badgeOf(e: Pick<CmsEvent, 'dateLabel' | 'sortDate' | 'signupStatus' | 'hasRecap'>): Badge | undefined {
-  if (phaseOf(e) === 'past') return e.hasRecap ? { kind: 'recap', label: '活動回顧' } : { kind: 'ended', label: '已結束' }
-  if (e.hasRecap) return { kind: 'recap', label: '活動回顧' }
-  return e.signupStatus ? { kind: e.signupStatus, label: SIGNUP_LABEL[e.signupStatus] } : undefined
+export function badgeOf(e: Pick<CmsEvent, 'dateLabel' | 'sortDate' | '_phase' | 'signupStatus' | 'hasRecap'>, lang: Lang = 'zh'): Badge | undefined {
+  const kind: Badge['kind'] | undefined =
+    phaseOf(e) === 'past' ? (e.hasRecap ? 'recap' : 'ended') : e.hasRecap ? 'recap' : e.signupStatus
+  return kind ? { kind, label: t(lang, `badge.${kind}`) } : undefined
 }
 
 /** 活動頁「依狀態看活動」的按鈕：一顆可以包含好幾種標籤（「隨時加入」也算報名中） */
 export const STATUS_FILTERS = [
-  { label: '報名中', kinds: ['open', 'free'] },
-  { label: '即將開放報名', kinds: ['planning'] },
-  { label: '已額滿', kinds: ['full'] },
-  { label: '活動回顧', kinds: ['recap'] },
-  { label: '已結束', kinds: ['ended'] },
-] as const
+  { key: 'status.open', kinds: ['open', 'free'] },
+  { key: 'status.planning', kinds: ['planning'] },
+  { key: 'status.full', kinds: ['full'] },
+  { key: 'status.recap', kinds: ['recap'] },
+  { key: 'status.ended', kinds: ['ended'] },
+] as const satisfies readonly { key: UiKey; kinds: readonly string[] }[]
 
 /** 依序：還沒結束的（日期近的在前）→ 已結束的（新的在前） */
-export async function getEvents() {
-  const all = await sanity.fetch<CmsEvent[]>(Q.events)
+export async function getEvents(lang: Lang = 'zh') {
+  const all = localize((await sanity.fetch<CmsEvent[]>(Q.events)).map(withPhase), lang)
   const current = all.filter((e) => phaseOf(e) === 'current')
   const past = all.filter((e) => phaseOf(e) === 'past').reverse()
   return { list: [...current, ...past], current, past }

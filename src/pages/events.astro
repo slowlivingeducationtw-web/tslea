@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro'
 import EventCard from '../components/EventCard.astro'
 import { getEvents, badgeOf, STATUS_FILTERS } from '../lib/events'
+import { t } from '../lib/ui'
 import { fetchOne, Q } from '../lib/sanity'
 import FormatList from '../components/FormatList.astro'
 import { getSettings, getThemes, getActivityTypes, typeTone } from '../lib/site'
@@ -73,7 +74,7 @@ const statuses = STATUS_FILTERS.filter((f) => list.some((e) => (f.kinds as reado
           <div class="container type-filter-inner status-row">
             <span class="type-filter-label">依狀態看活動</span>
             {statuses.map((f) => (
-              <button type="button" class="type-btn status-btn" data-status={f.kinds.join(',')} aria-pressed="false">{f.label}</button>
+              <button type="button" class="type-btn status-btn" data-status={f.kinds.join(',')} aria-pressed="false">{t('zh', f.key)}</button>
             ))}
           </div>
         )}

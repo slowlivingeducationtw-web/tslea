@@ -93,3 +93,7 @@ export function localize<T>(value: T, lang: Lang): Localized<T> {
 
 /** 這份文件在目前語言是否有譯文（中文、或沒有追蹤翻譯的資料都算有） */
 export const isTranslated = (doc: { _untranslated?: boolean } | null | undefined) => !doc?._untranslated
+
+/** 人名：英文版有填「英文姓名」才用，否則用中文姓名（不自行音譯） */
+export const displayName = (p: { name: string; nameEn?: string | null }, lang: Lang) =>
+  lang !== DEFAULT_LANG && p.nameEn?.trim() ? p.nameEn.trim() : p.name

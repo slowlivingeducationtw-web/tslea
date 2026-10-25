@@ -5,8 +5,8 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { getSettings } from '../lib/site';
 import { shareImageUrl } from '../lib/sanity';
-
-const settings = await getSettings();
+import { LANGS, langOf, langInfo, localizePath, stripLang } from '../lib/i18n';
+import { t } from '../lib/ui';
 
 const {
   title,
@@ -14,6 +14,9 @@ const {
   ogImage,
   noindex = false,
   jsonLd = null,
+  // 這一頁的英文版有沒有譯文（中文頁也要傳，用來決定要不要輸出 hreflang）。
+  // 預設沒有：英文頁會 noindex、不輸出 hreflang，忘了傳也不會讓 Google 收錄中文內容的英文頁
+  translated = false,
 } = Astro.props;
 
 const site = 'https://slowlivingeducation.org';
@@ -23,8 +26,20 @@ const path =
     .replace(/\.html$/, '')
     .replace(/\/index$/, '/')
     .replace(/(.)\/$/, '$1') || '/';
-const canonical = site + (path === '/' ? '' : path);
-const fullTitle = path === '/' ? title : `${title}｜臺灣慢活教育學會`;
+const lang = langOf(path);
+const settings = await getSettings(lang);
+const url = (p: string) => site + (p === '/' ? '' : p);
+const canonical = url(path);
+const isHome = stripLang(path) === '/';
+const fullTitle = isHome ? title : `${title}${t(lang, 'title.suffix')}`;
+const robotsNoindex = noindex || (lang !== 'zh' && !translated);
+// 各語言版本互相指向（只有英文版已翻譯時才輸出）
+const alternates = !noindex && translated
+  ? [
+      ...LANGS.map((l) => ({ hreflang: l.hreflang, href: url(localizePath(l.code, stripLang(path))) })),
+      { hreflang: 'x-default', href: url(stripLang(path)) },
+    ]
+  : [];
 // 分享圖：頁面指定的優先，其次是後台「網站設定 → 預設分享圖」，都沒有就用 /og-image.png
 const ogUrl = ogImage
   ? (/^https?:\/\//.test(ogImage) ? ogImage : site + ogImage)
@@ -33,44 +48,48 @@ const ogUrl = ogImage
 const org = {
   '@context': 'https://schema.org',
   '@type': 'NGO',
-  name: '臺灣慢活教育學會',
-  alternateName: ['Slow Living Education Society of Taiwan', 'Taiwan Slow Living Education Association'],
+  name: t(lang, 'org.name'),
+  alternateName: lang === 'zh'
+    ? ['Slow Living Education Society of Taiwan', 'Taiwan Slow Living Education Association']
+    : ['臺灣慢活教育學會', 'Taiwan Slow Living Education Association'],
   url: site,
   logo: site + '/images/logo.png',
   image: ogUrl,
   email: settings.email,
-  description:
-    '臺灣慢活教育學會以「身心健康」「藝術陪伴」「生態永續」三大共學主題，推廣慢活教育與終身學習。',
-  address: {
-    '@type': 'PostalAddress',
-    streetAddress: (settings.address ?? '').replace(/^苗栗縣苗栗市/, ''),
-    addressLocality: '苗栗市',
-    addressRegion: '苗栗縣',
-    addressCountry: 'TW',
-  },
-  areaServed: { '@type': 'Country', name: '臺灣' },
+  description: t(lang, 'org.description'),
+  address: lang === 'zh'
+    ? {
+        '@type': 'PostalAddress',
+        streetAddress: (settings.address ?? '').replace(/^苗栗縣苗栗市/, ''),
+        addressLocality: '苗栗市',
+        addressRegion: '苗栗縣',
+        addressCountry: 'TW',
+      }
+    : { '@type': 'PostalAddress', streetAddress: settings.address ?? '', addressLocality: 'Miaoli City', addressRegion: 'Miaoli County', addressCountry: 'TW' },
+  areaServed: { '@type': 'Country', name: t(lang, 'org.country') },
 };
 ---
 <!DOCTYPE html>
-<html lang="zh-Hant-TW">
+<html lang={langInfo(lang).htmlLang}>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{fullTitle}</title>
 <meta name="description" content={description}>
 <link rel="canonical" href={canonical}>
-{noindex && <meta name="robots" content="noindex, nofollow">}
+{robotsNoindex && <meta name="robots" content="noindex, nofollow">}
+{alternates.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href}>)}
 
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="臺灣慢活教育學會">
-<meta property="og:locale" content="zh_TW">
+<meta property="og:site_name" content={t(lang, 'org.name')}>
+<meta property="og:locale" content={langInfo(lang).ogLocale}>
 <meta property="og:title" content={fullTitle}>
 <meta property="og:description" content={description}>
 <meta property="og:url" content={canonical}>
 <meta property="og:image" content={ogUrl}>
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="臺灣慢活教育學會">
+<meta property="og:image:alt" content={t(lang, 'org.name')}>
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content={fullTitle}>
 <meta name="twitter:description" content={description}>
@@ -102,7 +121,7 @@ const org = {
   function setOpen(open) {
     menu.classList.toggle('open', open);
     btn.setAttribute('aria-expanded', String(open));
-    btn.setAttribute('aria-label', open ? '關閉選單' : '開啟選單');
+    btn.setAttribute('aria-label', open ? btn.dataset.closeLabel : btn.dataset.openLabel);
     document.body.style.overflow = open ? 'hidden' : '';
   }
   btn.addEventListener('click', function () { setOpen(!menu.classList.contains('open')); });

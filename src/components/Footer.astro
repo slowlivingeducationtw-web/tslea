@@ -1,20 +1,23 @@
 ---
 import { getNavigation, getSettings, isExternal } from '../lib/site'
+import { langOf, localizePath } from '../lib/i18n'
+import { t } from '../lib/ui'
 
 // 連結分組在後台「選單與頁尾」，地址、粉專、立案字號在「網站設定」
-const [nav, s] = await Promise.all([getNavigation(), getSettings()])
+const lang = langOf(Astro.url.pathname)
+const [nav, s] = await Promise.all([getNavigation(lang), getSettings(lang)])
 const ext = (href: string) => (isExternal(href) ? { target: '_blank', rel: 'noopener' } : {})
-const legal = [s.registrationNo && `立案字號：${s.registrationNo}`, s.taxId && `統一編號：${s.taxId}`].filter(Boolean)
+const legal = [s.registrationNo && `${t(lang, 'footer.registrationNo')}${s.registrationNo}`, s.taxId && `${t(lang, 'footer.taxId')}${s.taxId}`].filter(Boolean)
 ---
 <footer class="site-footer">
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
         <img class="footer-logo" src="/images/logo-light.png" width="880" height="196"
-             alt="臺灣慢活教育學會 Slow Living Education Society of Taiwan">
+             alt={t(lang, 'org.logoAlt')}>
         {s.facebook && (
           <a class="btn btn-outline on-dark btn-sm" href={s.facebook} target="_blank" rel="noopener">
-            {nav.facebookLabel || 'Facebook 粉絲專頁'}<span class="sr-only">（另開新視窗）</span>
+            {nav.facebookLabel || t(lang, 'footer.facebook')}<span class="sr-only">{t(lang, 'a11y.newWindow')}</span>
           </a>
         )}
         {s.address && <p class="footer-addr">{s.address}</p>}
@@ -24,14 +27,16 @@ const legal = [s.registrationNo && `立案字號：${s.registrationNo}`, s.taxId
         <nav aria-label={g.title}>
           <h2 class="footer-h">{g.title}</h2>
           <ul class="footer-links">
-            {(g.links ?? []).map((l) => <li><a href={l.href} {...ext(l.href)}>{l.label}</a></li>)}
+            {(g.links ?? []).map((l) => <li><a href={localizePath(lang, l.href)} {...ext(l.href)}>{l.label}</a></li>)}
           </ul>
         </nav>
       ))}
     </div>
 
     <p class="footer-bottom">
-      © {new Date().getFullYear()} {s.orgName || '臺灣慢活教育學會'} Slow Living Education Society of Taiwan
+      {lang === 'zh'
+        ? <>© {new Date().getFullYear()} {s.orgName || '臺灣慢活教育學會'} Slow Living Education Society of Taiwan</>
+        : <>© {new Date().getFullYear()} {t(lang, 'org.name')}</>}
       {s.footerNote && <> · {s.footerNote}</>}
       {legal.length > 0 && <><br>{legal.join('　')}</>}
     </p>

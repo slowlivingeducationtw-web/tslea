@@ -4,24 +4,27 @@ import { imageUrl } from '../lib/sanity'
 import { videoThumb } from '../lib/video'
 import { getActivityTypes, typeTone } from '../lib/site'
 import { badgeOf, type CmsEvent } from '../lib/events'
+import { langOf, localizePath } from '../lib/i18n'
+import { t } from '../lib/ui'
 
 type Props = { event: CmsEvent }
 const { event: e } = Astro.props
-const badge = badgeOf(e)
+const lang = langOf(Astro.url.pathname)
+const badge = badgeOf(e, lang)
 // 標籤用後台選的「活動類別」；還沒選類別的舊資料才顯示舊的自由文字標籤
 const type = e.activityType
-const tone = typeTone(await getActivityTypes(), type?.slug)
+const tone = typeTone(await getActivityTypes(lang), type?.slug)
 const label = type?.title || e.tag
 // 沒有照片時，有影片就用影片縮圖
 const cover = imageUrl(e.cover?.image, 900) ?? videoThumb(e.videoUrl)
 const isVideoThumb = !e.cover?.image && !!cover
-const more = badge?.kind === 'recap' ? '閱讀回顧' : '看活動內容'
+const more = t(lang, badge?.kind === 'recap' ? 'card.readRecap' : 'card.seeEvent')
 ---
 <article class={`card event-card badge-${badge?.kind ?? 'none'}`} data-type={type?.slug ?? ''} data-status={badge?.kind ?? 'none'}>
   {cover ? (
     <div class="event-cover-wrap">
       <img class="event-cover" src={cover} alt={e.cover?.alt || ''} loading="lazy" decoding="async" />
-      {isVideoThumb && <span class="event-play" aria-hidden="true">▶ 影片</span>}
+      {isVideoThumb && <span class="event-play" aria-hidden="true">{t(lang, 'card.video')}</span>}
     </div>
   ) : (
     <div class={`event-band photo tone-${tone}`} aria-hidden="true"><span>{e.icon}</span></div>
@@ -30,14 +33,15 @@ const more = badge?.kind === 'recap' ? '閱讀回顧' : '看活動內容'
     <div class="event-top">
       {badge && <span class={`signup signup-${badge.kind}`}>{badge.label}</span>}
       {label && <span class={`chip tone-${tone}`}>{label}</span>}
+      {e._untranslated && <span class="chip chip-untranslated">{t(lang, 'untranslated.chip')}</span>}
     </div>
     <p class="event-date">{e.dateLabel}{e.place ? `・${e.place}` : ''}</p>
-    <h3 class="card-title"><a class="event-link" href={`/events/${e.slug}`}>{e.title}</a></h3>
+    <h3 class="card-title"><a class="event-link" href={localizePath(lang, `/events/${e.slug}`)}>{e.title}</a></h3>
     {e.description && <p class="card-text">{e.description}</p>}
     <div class="card-foot event-foot">
       {badge?.kind === 'open' && e.signupUrl && (
         <a class="btn btn-solid btn-sm signup-btn" href={e.signupUrl} target="_blank" rel="noopener">
-          我要報名 →<span class="sr-only">（{e.title}，另開新視窗）</span>
+          {t(lang, 'card.signup')} →<span class="sr-only">{t(lang, 'a11y.newWindowFor', { title: e.title })}</span>
         </a>
       )}
       <span class="card-more" aria-hidden="true">{more} →</span>

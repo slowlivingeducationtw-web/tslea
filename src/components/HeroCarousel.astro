@@ -4,6 +4,8 @@
 // 換頁：圓點、左右箭頭（電腦版）、手指左右滑（手機）、鍵盤左右方向鍵；
 // 使用者系統設定「減少動態」時不自動播放。
 import Photo from './Photo.astro'
+import { langOf } from '../lib/i18n'
+import { t } from '../lib/ui'
 
 export type HeroSlide = {
   pre?: string
@@ -21,15 +23,17 @@ export type HeroSlide = {
 
 type Props = { slides: HeroSlide[]; interval?: number }
 const { slides, interval = 6000 } = Astro.props
+const lang = langOf(Astro.url.pathname)
 ---
-<section class="hero-c" aria-roledescription="carousel" aria-label="學會主視覺" data-interval={interval}>
+<section class="hero-c" aria-roledescription="carousel" aria-label={t(lang, 'hero.label')} data-interval={interval}
+         data-video-title={t(lang, 'hero.videoTitle')}>
   {slides.map((s, i) => (
     <div class={`hero-slide tone-${s.tone}${i === 0 ? ' is-active' : ''}`}
-         role="group" aria-roledescription="slide" aria-label={`第 ${i + 1} 頁，共 ${slides.length} 頁`}
+         role="group" aria-roledescription="slide" aria-label={t(lang, 'hero.slide', { n: i + 1, total: slides.length })}
          aria-hidden={i === 0 ? undefined : 'true'}>
       <Photo src={s.image ?? (s.video ? `https://i.ytimg.com/vi/${s.video.id}/maxresdefault.jpg` : null)}
              alt={s.imageAlt} tone={s.tone === 'forest' ? 'forest' : s.tone}
-             icon="🌳" placeholder="照片待補" class="hero-c-media" eager={i === 0} />
+             icon="🌳" placeholder={t(lang, 'photo.placeholder')} class="hero-c-media" eager={i === 0} />
       {s.video && (
         <div class="hero-video" aria-hidden="true"
              data-yt={s.video.id} data-start={s.video.start} data-end={s.video.end ?? ''}></div>
@@ -47,10 +51,10 @@ const { slides, interval = 6000 } = Astro.props
 
   {slides.length > 1 && (
     <>
-      <button type="button" class="hero-arrow is-prev" data-step="-1" aria-label="上一頁">
+      <button type="button" class="hero-arrow is-prev" data-step="-1" aria-label={t(lang, 'hero.prev')}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
       </button>
-      <button type="button" class="hero-arrow is-next" data-step="1" aria-label="下一頁">
+      <button type="button" class="hero-arrow is-next" data-step="1" aria-label={t(lang, 'hero.next')}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
       </button>
     </>
@@ -58,10 +62,10 @@ const { slides, interval = 6000 } = Astro.props
 
   {slides.length > 1 && (
     <div class="hero-ctrl">
-      <div class="hero-dots" role="group" aria-label="選擇頁面">
+      <div class="hero-dots" role="group" aria-label={t(lang, 'hero.dots')}>
         {slides.map((_, i) => (
           <button type="button" class="hero-dot" data-go={i}
-                  aria-label={`顯示第 ${i + 1} 頁`} aria-current={i === 0 ? 'true' : undefined}></button>
+                  aria-label={t(lang, 'hero.show', { n: i + 1 })} aria-current={i === 0 ? 'true' : undefined}></button>
         ))}
       </div>
     </div>
@@ -145,7 +149,7 @@ const { slides, interval = 6000 } = Astro.props
         })
         const f = document.createElement('iframe')
         f.src = `https://www.youtube-nocookie.com/embed/${v.box.dataset.yt}?${p}`
-        f.title = '背景影片'
+        f.title = v.box.closest<HTMLElement>('.hero-c')?.dataset.videoTitle ?? ''
         f.tabIndex = -1
         f.allow = 'autoplay; encrypted-media'
         // 開始接收播放秒數；真的播到片段裡才淡入，避免先看到黑畫面與 YouTube 介面

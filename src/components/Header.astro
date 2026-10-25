@@ -1,11 +1,20 @@
 ---
 import { getNavigation, isExternal, type NavItem } from '../lib/site'
+import { langOf, localizePath } from '../lib/i18n'
+import { t } from '../lib/ui'
+import LangSwitch from './LangSwitch.astro'
 
-// 選單內容在後台「選單與頁尾」編輯
+// 選單內容在後台「選單與頁尾」編輯；英文頁的站內連結自動加上 /en
 const { path } = Astro.props
-const nav = await getNavigation()
-const items = nav.mainNav ?? []
-const cta = nav.headerCta
+const lang = langOf(path)
+const nav = await getNavigation(lang)
+const L = (href: string) => localizePath(lang, href)
+const items = (nav.mainNav ?? []).map((i) => ({
+  ...i,
+  href: L(i.href),
+  children: i.children?.map((c) => ({ ...c, href: L(c.href) })),
+}))
+const cta = nav.headerCta && { ...nav.headerCta, href: L(nav.headerCta.href) }
 const current = (href: string) => (href === path ? 'page' : undefined)
 // 子選單裡有目前頁面時，主項目也標示為所在區塊
 const inSection = (item: NavItem) =>
@@ -22,12 +31,12 @@ const nest = (children: Sub[] = []) =>
 ---
 <header class="site-header" id="mainNav">
   <div class="site-header-inner">
-    <a href="/" class="site-logo" aria-label="臺灣慢活教育學會 首頁">
-      <img src="/images/logo-dark.png" alt="臺灣慢活教育學會 Slow Living Education Society of Taiwan"
+    <a href={L('/')} class="site-logo" aria-label={t(lang, 'a11y.home')}>
+      <img src="/images/logo-dark.png" alt={t(lang, 'org.logoAlt')}
            width="720" height="160">
     </a>
 
-    <nav class="site-nav" id="navLinks" aria-label="主要導覽">
+    <nav class="site-nav" id="navLinks" aria-label={t(lang, 'a11y.mainNav')}>
       <ul class="nav-top">
         {items.map((item) => (
           <li class={item.children?.length ? 'has-sub' : undefined}>
@@ -37,7 +46,7 @@ const nest = (children: Sub[] = []) =>
               {item.children?.length ? <span class="sub-caret" aria-hidden="true"></span> : null}
             </a>
             {item.children?.length ? (
-              <ul class="nav-sub" aria-label={`${item.label} 子選單`}>
+              <ul class="nav-sub" aria-label={`${item.label}${t(lang, 'a11y.subMenu')}`}>
                 {nest(item.children).map(({ link: c, subs }) => (
                   <li class={subs.length ? 'has-nest' : undefined}>
                     <a href={c.href} {...ext(c.href)}>{c.label}</a>
@@ -58,8 +67,10 @@ const nest = (children: Sub[] = []) =>
 
     <div class="header-actions">
       {cta && <a href={cta.href} class="btn btn-solid btn-sm nav-cta">{cta.label}</a>}
+      <LangSwitch path={path} />
       <button class="menu-btn" id="navToggle" type="button"
-              aria-label="開啟選單" aria-expanded="false" aria-controls="navLinks">
+              aria-label={t(lang, 'a11y.openMenu')} data-open-label={t(lang, 'a11y.openMenu')}
+              data-close-label={t(lang, 'a11y.closeMenu')} aria-expanded="false" aria-controls="navLinks">
         <span class="bars" aria-hidden="true"></span>
       </button>
     </div>

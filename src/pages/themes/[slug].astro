@@ -27,7 +27,7 @@ type ThemePage = {
 }
 
 export async function getStaticPaths() {
-  const themes = (await sanity.fetch<ThemePage[]>(Q.themePages)) ?? []
+  const themes = (await sanity.fetch<{ themes?: ThemePage[] }>(Q.themePages))?.themes ?? []
   return themes.map((t, i) => ({ params: { slug: t.slug }, props: { theme: t, index: i, all: themes } }))
 }
 

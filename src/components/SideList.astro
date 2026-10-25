@@ -4,7 +4,10 @@
 export type SideItem = { href: string; title: string; meta?: string; current?: boolean }
 export type SideGroup = { title: string; items: SideItem[]; moreHref?: string }
 type Props = { heading: string; headingHref: string; groups: SideGroup[]; label: string }
+import { langOf } from '../lib/i18n'
+import { t } from '../lib/ui'
 const { heading, headingHref, groups, label } = Astro.props
+const lang = langOf(Astro.url.pathname)
 ---
 <aside class="side" aria-label={label}>
   <p class="side-h"><a href={headingHref}>{heading}</a></p>
@@ -21,7 +24,7 @@ const { heading, headingHref, groups, label } = Astro.props
           </li>
         ))}
       </ul>
-      {g.moreHref && <a class="side-more" href={g.moreHref}>看全部 →</a>}
+      {g.moreHref && <a class="side-more" href={g.moreHref}>{t(lang, 'side.more')} →</a>}
     </nav>
   ))}
 </aside>

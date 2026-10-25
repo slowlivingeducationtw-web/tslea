@@ -1,8 +1,9 @@
 // 全站共用的設定（聯絡資訊、選單、頁尾、共學主題），都來自後台。
 // 每次建置只向 Sanity 查一次，頁首、頁尾與各頁共用同一份結果。
 import { sanity, fetchOne, Q } from './sanity'
+import { localize, type Lang } from './i18n'
 
-export type Link = { label: string; href: string }
+export type Link = { label: string; href: string; _untranslated?: boolean }
 export type NavItem = Link & { children?: (Link & { indent?: boolean })[] }
 
 export type Settings = {
@@ -50,10 +51,16 @@ const once = <T>(fn: () => Promise<T>) => {
   return () => (import.meta.env.DEV ? fn() : (p ??= fn()))
 }
 
-export const getSettings = once(() => fetchOne<Settings>(Q.siteSettings, {}, '網站設定'))
-export const getNavigation = once(() => fetchOne<Navigation>(Q.navigation, {}, '選單與頁尾'))
-export const getThemes = once(() => fetchOne<Themes>(Q.themes, {}, '慢活共學'))
-export const getActivityTypes = once(() => sanity.fetch<ActivityType[]>(Q.activityTypes))
+// 快取的是後台原始資料（含譯文），每次依語言合併
+const settings = once(() => fetchOne<Settings>(Q.siteSettings, {}, '網站設定'))
+const navigation = once(() => fetchOne<Navigation>(Q.navigation, {}, '選單與頁尾'))
+const themes = once(() => fetchOne<Themes>(Q.themes, {}, '慢活共學'))
+const activityTypes = once(() => sanity.fetch<ActivityType[]>(Q.activityTypes))
+
+export const getSettings = async (lang: Lang = 'zh') => localize(await settings(), lang)
+export const getNavigation = async (lang: Lang = 'zh') => localize(await navigation(), lang)
+export const getThemes = async (lang: Lang = 'zh') => localize(await themes(), lang)
+export const getActivityTypes = async (lang: Lang = 'zh') => localize(await activityTypes(), lang)
 
 // 活動卡片的色塊依「學會活動類別」的順序輪替；沒有類別的用綠色
 const TYPE_TONES = ['mist', 'clay', 'leaf', 'forest'] as const
