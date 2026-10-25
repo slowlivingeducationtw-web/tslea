@@ -1,0 +1,144 @@
+---
+import Base from '../layouts/Base.astro'
+import { sanity, Q } from '../lib/sanity'
+import UntranslatedNote from '../components/UntranslatedNote.astro'
+import { displayName, isTranslated, langOf, localize } from '../lib/i18n'
+import { t } from '../lib/ui'
+
+type Person = {
+  name: string
+  role: string
+  group: 'director' | 'supervisor' | 'secretariat' | 'advisor'
+  note?: string
+  term: number
+  speech?: string
+  nameEn?: string
+  isLeader?: boolean
+  _untranslated?: boolean
+}
+
+const lang = langOf(Astro.url.pathname)
+// 「理事長」要用中文職稱判斷，所以先標好再合併譯文
+const raw = (await sanity.fetch<Person[]>(Q.people)).map((p) => ({ ...p, isLeader: p.role.includes('理事長') }))
+const all = localize(raw, lang)
+
+// 只顯示最新一屆。換屆時在後台新增第 2 屆資料即可，舊的留著不動。
+const term = Math.max(...all.map((p) => p.term ?? 1), 1)
+const people = all.filter((p) => (p.term ?? 1) === term)
+
+const by = (g: Person['group']) => people.filter((p) => p.group === g)
+
+// 理事組分兩排：正副理事長用大卡片，其餘理事用小卡片
+const directors = by('director')
+const leaders = directors.filter((p) => p.isLeader)
+const members = directors.filter((p) => !p.isLeader)
+
+// 當選致詞：名單下方依序列出（理事→監事），名片卡上的「讀致詞」捲到這裡
+const speechId = (p: Person) => `speech-${p.name}`
+const speeches = [...directors, ...by('supervisor')].filter((p) => p.speech?.trim())
+const hasSpeech = (p: Person) => speeches.includes(p)
+const paras = (s: string) => s.trim().split(/\n\s*\n/)
+const name = (p: Person) => displayName(p, lang)
+
+const GROUPS = [
+  { key: 'supervisor', label: t(lang, 'board.supervisors'), accent: 'sky', bg: 'sky-pale', min: 130 },
+  { key: 'secretariat', label: t(lang, 'board.secretariat'), accent: 'sage', bg: 'sage-pale', min: 130 },
+  { key: 'advisor', label: t(lang, 'board.advisors'), accent: 'earth', bg: 'earth-pale', min: 200 },
+] as const
+
+// 名單由每位理監事各自的資料組成：全部翻好才算英文版完成
+const enPeople = localize(raw, 'en').filter((p) => (p.term ?? 1) === term)
+const translated = enPeople.every((p) => isTranslated(p))
+const someUntranslated = people.some((p) => p._untranslated)
+---
+<Base
+  title={t(lang, 'board.title')}
+  description={t(lang, 'board.description', { term })}
+  translated={translated}
+>
+  <div class="page" id="page-board">
+    <UntranslatedNote show={someUntranslated} />
+    <div class="board-page-header">
+      <p class="sec-label">Our Team</p>
+      <h2 class="sec-title">{t(lang, 'board.heading', { term: lang === 'zh' && term === 1 ? '一' : term })}</h2>
+    </div>
+
+    <section class="sec" style="background:var(--warm-white);padding-top:3rem">
+      {/* 理事 */}
+      <div style="margin-bottom:2.5rem">
+        <div style="font-size:0.86rem;letter-spacing:0.25em;color:var(--earth);margin-bottom:1.5rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border)">{t(lang, 'board.directors')}</div>
+
+        {leaders.length > 0 && (
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1px;margin-bottom:1px">
+            {leaders.map((p, i) => (
+              <div style={`background:var(--earth-pale);padding:1.4rem 1.5rem;border-top:2px solid var(--earth${i === 0 ? '' : '-light'})`}>
+                <div style="font-size:0.82rem;letter-spacing:0.2em;color:var(--earth);margin-bottom:0.4rem">{p.role}</div>
+                <div style="font-size:1rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">{name(p)}</div>
+                {hasSpeech(p) && <a class="speech-link" href={`#${speechId(p)}`}>{t(lang, 'board.readSpeech')}</a>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {members.length > 0 && (
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:1px">
+            {members.map((p) => (
+              <div style="background:var(--cream);padding:1.2rem 1.5rem">
+                <div style="font-size:0.82rem;letter-spacing:0.2em;color:var(--muted);margin-bottom:0.35rem">{p.role}</div>
+                <div style="font-size:0.95rem;font-weight:600;letter-spacing:0.12em;color:var(--charcoal)">{name(p)}</div>
+                {hasSpeech(p) && <a class="speech-link" href={`#${speechId(p)}`}>{t(lang, 'board.readSpeech')}</a>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {GROUPS.map((g, gi) => {
+        const list = by(g.key)
+        if (list.length === 0) return null
+        return (
+          <div style={gi === GROUPS.length - 1 ? '' : 'margin-bottom:2.5rem'}>
+            <div style={`font-size:0.86rem;letter-spacing:0.25em;color:var(--${g.accent});margin-bottom:1.5rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border)`}>{g.label}</div>
+            <div style={`display:grid;grid-template-columns:repeat(auto-fill,minmax(${g.min}px,1fr));gap:1px`}>
+              {list.map((p) => (
+                <div style={`background:var(--${g.bg});padding:1.2rem 1.5rem`}>
+                  <div style={`font-size:0.82rem;letter-spacing:0.2em;color:var(--${g.accent});margin-bottom:0.35rem`}>{p.role}</div>
+                  <div style="font-size:1rem;font-weight:600;letter-spacing:0.1em;color:var(--charcoal);line-height:1.6">
+                    {name(p)}
+                    {p.note && <><br /><span style="font-size:0.94rem;font-weight:400;letter-spacing:0.06em;color:var(--muted)">{p.note}</span></>}
+                  </div>
+                  {hasSpeech(p) && <a class="speech-link" href={`#${speechId(p)}`}>{t(lang, 'board.readSpeech')}</a>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+    </section>
+
+    {speeches.length > 0 && (
+      <section class="sec speeches" id="speeches" aria-labelledby="speeches-title">
+        <h2 id="speeches-title" class="speeches-h">{t(lang, 'board.speeches')}</h2>
+        {speeches.map((p) => (
+          <article class="speech" id={speechId(p)}>
+            <h3 class="speech-name">{name(p)}<span>{lang === 'zh' ? '｜' : ' | '}{p.role}</span></h3>
+            {paras(p.speech!).map((x) => <p>{x}</p>)}
+          </article>
+        ))}
+      </section>
+    )}
+  </div>
+</Base>
+
+<style>
+  .speech-link { display: inline-block; margin-top: 0.5rem; font-size: 0.82rem; letter-spacing: 0.08em; color: var(--earth); text-decoration: none; }
+  .speech-link:hover { text-decoration: underline; }
+  .speeches { background: var(--cream); padding-top: 3rem; }
+  .speeches-h { font-size: 1.3rem; font-weight: 700; letter-spacing: 0.2em; color: var(--charcoal); margin-bottom: 2rem; }
+  .speech { max-width: 44em; padding: 1.6rem 0; border-top: 1px solid var(--border); scroll-margin-top: calc(var(--header-h, 64px) + 1rem); }
+  .speech-name { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.12em; color: var(--charcoal); margin-bottom: 0.9rem; }
+  .speech-name span { font-weight: 400; font-size: 0.92rem; color: var(--earth); }
+  /* 致詞裡按 Enter 的換行照原樣顯示（詩句那樣的分行） */
+  .speech p { white-space: pre-line; line-height: 2; color: var(--charcoal); margin-top: 0.7rem; }
+  .speech:target { background: var(--earth-pale); padding-inline: 1rem; border-radius: 6px; }
+</style>

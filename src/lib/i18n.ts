@@ -16,7 +16,8 @@ export const langInfo = (lang: Lang) => LANGS.find((l) => l.code === lang)!
 const OTHER = LANGS.filter((l) => l.prefix)
 
 export function langOf(pathname: string): Lang {
-  return OTHER.find((l) => pathname === l.prefix || pathname.startsWith(l.prefix + '/'))?.code ?? DEFAULT_LANG
+  const p = pathname.replace(/\.html$/, '') // 建置時網址帶 .html（build.format 'file'）
+  return OTHER.find((l) => p === l.prefix || p.startsWith(l.prefix + '/'))?.code ?? DEFAULT_LANG
 }
 
 /** /en/about → /about；/en → / */

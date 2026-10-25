@@ -95,4 +95,6 @@ export async function getColumnItems(lang: Lang = 'zh') {
   return [...articles, ...recaps].sort((x, y) => y.publishedAt.localeCompare(x.publishedAt))
 }
 
+export const articlePaths = async () => (await sanity.fetch<string[]>(Q.articleSlugs)).map((slug) => ({ params: { slug } }))
+
 export const getArticles = async (lang: Lang = 'zh') => localize(await sanity.fetch<Article[]>(Q.articles), lang)

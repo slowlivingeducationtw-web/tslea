@@ -62,6 +62,8 @@ export const STATUS_FILTERS = [
   { key: 'status.ended', kinds: ['ended'] },
 ] as const satisfies readonly { key: UiKey; kinds: readonly string[] }[]
 
+export const eventPaths = async () => (await sanity.fetch<{ slug: string }[]>(Q.events)).map((e) => ({ params: { slug: e.slug } }))
+
 /** 依序：還沒結束的（日期近的在前）→ 已結束的（新的在前） */
 export async function getEvents(lang: Lang = 'zh') {
   const all = localize((await sanity.fetch<CmsEvent[]>(Q.events)).map(withPhase), lang)

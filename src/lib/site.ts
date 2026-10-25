@@ -1,7 +1,8 @@
 // 全站共用的設定（聯絡資訊、選單、頁尾、共學主題），都來自後台。
 // 每次建置只向 Sanity 查一次，頁首、頁尾與各頁共用同一份結果。
 import { sanity, fetchOne, Q } from './sanity'
-import { localize, type Lang } from './i18n'
+import { isTranslated, localize, type Lang } from './i18n'
+import { withPhase } from './events'
 
 export type Link = { label: string; href: string; _untranslated?: boolean }
 export type NavItem = Link & { children?: (Link & { indent?: boolean })[] }
@@ -61,6 +62,17 @@ export const getSettings = async (lang: Lang = 'zh') => localize(await settings(
 export const getNavigation = async (lang: Lang = 'zh') => localize(await navigation(), lang)
 export const getThemes = async (lang: Lang = 'zh') => localize(await themes(), lang)
 export const getActivityTypes = async (lang: Lang = 'zh') => localize(await activityTypes(), lang)
+
+// 三大主題頁（/themes/{slug}）：譯文在 themesSection 這一層
+const themePages = once(() => sanity.fetch<{ themes?: any[] } | null>(Q.themePages))
+export const themePaths = async () => ((await themePages())?.themes ?? []).map((t) => ({ params: { slug: t.slug as string } }))
+export async function getThemePages(lang: Lang) {
+  const fetched = await themePages()
+  // 相關活動的「已結束」要用中文日期判斷，合併譯文前先算好（譯文裡的活動是另外的參照，不受影響）
+  const raw = fetched && { ...fetched, themes: fetched.themes?.map((th) => ({ ...th, events: th.events?.map((e: any) => (e ? withPhase(e) : e)) })) }
+  const loc = localize(raw, lang)
+  return { themes: (loc?.themes ?? []) as any[], untranslated: !!loc?._untranslated, enTranslated: isTranslated(localize(raw, 'en')) }
+}
 
 // 活動卡片的色塊依「學會活動類別」的順序輪替；沒有類別的用綠色
 const TYPE_TONES = ['mist', 'clay', 'leaf', 'forest'] as const

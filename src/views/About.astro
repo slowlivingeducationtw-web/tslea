@@ -1,0 +1,112 @@
+---
+import Base from '../layouts/Base.astro'
+import PortableText from '../components/PortableText.astro'
+import Photo from '../components/Photo.astro'
+import { fetchOne, imageUrl, Q } from '../lib/sanity'
+import UntranslatedNote from '../components/UntranslatedNote.astro'
+import { isTranslated, langOf, localize, localizePath } from '../lib/i18n'
+import { t } from '../lib/ui'
+
+// 全部內容在後台「頁面文案 → 認識學會」；學會簡介的前兩段也會出現在首頁
+type Page = {
+  title: string
+  lead?: string
+  seoDescription?: string
+  body?: any[]
+  image?: { asset?: any; alt?: string }
+  plansTitle?: string
+  plans?: { _key: string; icon?: string; title: string; text?: string }[]
+  linksTitle?: string
+  links?: { _key: string; title: string; text?: string; href: string }[]
+}
+const lang = langOf(Astro.url.pathname)
+const L = (href: string) => localizePath(lang, href)
+const raw = await fetchOne<Page>(Q.aboutPage, {}, '認識學會頁面')
+const page = localize(raw, lang)
+---
+<Base
+  title={page.title}
+  description={page.seoDescription}
+  translated={isTranslated(localize(raw, 'en'))}
+>
+  <div class="page" id="page-about">
+    <UntranslatedNote show={!!page._untranslated} />
+    <header class="page-head">
+      <div class="container">
+        <p class="crumbs"><a href={L('/')}>{t(lang, 'crumb.home')}</a> / {page.title}</p>
+        <h1>{page.title}</h1>
+        {page.lead && <p class="lead">{page.lead}</p>}
+      </div>
+    </header>
+
+    <section class="block">
+      <div class="container about-page">
+        <div class="about-page-body">
+          <PortableText value={page.body} />
+        </div>
+        <Photo src={imageUrl(page.image, 1400)} alt={page.image?.alt || t(lang, 'about.imageAlt')} tone="leaf" icon="🍃" placeholder={t(lang, 'about.imagePlaceholder')} class="about-page-media" />
+      </div>
+    </section>
+
+    {page.plans?.length ? (
+      <section class="block" id="plans" aria-labelledby="plans-title">
+        <div class="container">
+          <h2 id="plans-title" class="block-title">{page.plansTitle || t(lang, 'about.plansTitle')}</h2>
+          <ul class="plan-list">
+            {page.plans.map((p) => (
+              <li class="plan-li">
+                {p.icon && <span class="plan-icon" aria-hidden="true">{p.icon}</span>}
+                <div>
+                  <h3 class="plan-name">{p.title}</h3>
+                  {p.text && <p class="plan-text">{p.text}</p>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    ) : null}
+
+    {page.links?.length ? (
+    <section class="block block-alt" aria-labelledby="about-more">
+      <div class="container">
+        <h2 id="about-more" class="block-title">{page.linksTitle || t(lang, 'about.linksTitle')}</h2>
+        <ul class="grid-3 about-links" style={`--cols:${Math.min(page.links.length, 4)}`}>
+          {page.links.map((l) => (
+            <li class="card">
+              <div class="card-body">
+                <h3 class="card-title"><a href={L(l.href)}>{l.title}</a></h3>
+                {l.text && <p class="card-text">{l.text}</p>}
+                <div class="card-foot"><span class="card-more" aria-hidden="true">{t(lang, 'about.go')} →</span></div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+    ) : null}
+  </div>
+</Base>
+
+<style>
+  .about-page { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: clamp(2rem, 5vw, 4rem); align-items: start; }
+  .about-page-body :global(.pt) { font-size: 1rem; line-height: 2.2; }
+  .about-page :global(.about-page-media) { aspect-ratio: 4 / 5; border-radius: var(--radius); position: sticky; top: calc(var(--header-h) + 1.5rem); }
+  .about-links { list-style: none; margin-top: 1.8rem; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); }
+  @media (max-width: 1000px) { .about-links { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 860px) {
+    .about-page { grid-template-columns: minmax(0, 1fr); }
+    .about-page :global(.about-page-media) { position: static; aspect-ratio: 16 / 10; }
+  }
+  @media (max-width: 560px) { .about-links { grid-template-columns: minmax(0, 1fr); } }
+  .plan-list { margin-top: 2.2rem; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.75rem 2rem; }
+  .plan-li { display: flex; gap: 1rem; align-items: flex-start; }
+  .plan-icon {
+    flex: none; width: 48px; height: 48px; border-radius: 50%; background: var(--forest-pale);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1.4rem;
+  }
+  .plan-name { font-size: 1.1rem; font-weight: 600; color: var(--ink); letter-spacing: 0.06em; }
+  .plan-text { font-size: 1rem; color: var(--ink-soft); line-height: 1.8; margin-top: 0.3rem; }
+  @media (max-width: 900px) { .plan-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .plan-list { grid-template-columns: minmax(0, 1fr); } }
+</style>

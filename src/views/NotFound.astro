@@ -1,0 +1,19 @@
+---
+import Base from '../layouts/Base.astro';
+import { langOf, localizePath } from '../lib/i18n';
+import { t } from '../lib/ui';
+
+const lang = langOf(Astro.url.pathname);
+---
+<Base title={t(lang, 'notFound.title')} description={t(lang, 'notFound.text1')} noindex={true}>
+  <div class="page">
+    <section class="sec" style="max-width:640px;margin:0 auto;text-align:center">
+      <p class="sec-label">404</p>
+      <h1 class="sec-title" style="margin-bottom:1.5rem">{t(lang, 'notFound.heading')}</h1>
+      <p style="font-size:1rem;line-height:2.2;color:var(--muted);letter-spacing:0.05em;margin-bottom:2.5rem">
+        {t(lang, 'notFound.text1')}<br>{t(lang, 'notFound.text2')}
+      </p>
+      <a href={localizePath(lang, '/')} class="btn-primary" style="display:inline-block;text-decoration:none">{t(lang, 'notFound.home')}</a>
+    </section>
+  </div>
+</Base>

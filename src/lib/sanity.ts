@@ -107,12 +107,13 @@ export const Q = {
   themes: `*[_id == "themesSection"][0]${withI18n('{ title, themes[]{ ..., "slug": slug.current }, formatsTitle }')}`,
 
   // 主題頁（/themes/{slug}）：完整介紹＋挑選的相關活動（未發布的活動會是 null，頁面上濾掉）
-  // 譯文在 themesSection 這一層，所以整份取回、合併後再拿 .themes
+  // 譯文在 themesSection 這一層，所以整份取回、合併後再拿 .themes。
+  // 譯文那邊不取相關活動：活動清單照中文版，每個活動再各自合併自己的譯文
   themePages: `*[_id == "themesSection"][0]${withI18n(`{ "themes": themes[defined(slug.current)]{
     _key, icon, title, en, description, image, category, "slug": slug.current,
     body${RICH},
     "events": events[]->${EVENT_CARD}
-  } }`)}`,
+  } }`, `{ "themes": themes[defined(slug.current)]{ _key, title, description, image, "slug": slug.current, body${RICH} } }`)}`,
 
   aboutPage: `*[_id == "aboutPage"][0]${withI18n(`{ ..., body${RICH} }`)}`,
 

@@ -1,0 +1,173 @@
+---
+// 活動頁：/events/{網址代稱}，內容在後台「內容 → 活動」。
+// 一個活動一頁：上半是介紹與報名，辦完後補上的「活動回顧」接在下面。
+// 版面與專欄文章頁共用：電腦版左側列出所有活動，手機版改看頁尾「其他活動」。
+import Base from '../layouts/Base.astro'
+import PortableText from '../components/PortableText.astro'
+import EventCard from '../components/EventCard.astro'
+import SideList, { type SideGroup } from '../components/SideList.astro'
+import { sanity, Q, imageUrl, imageDims } from '../lib/sanity'
+import { videoHtml, videoThumb } from '../lib/video'
+import { getActivityTypes, typeTone } from '../lib/site'
+import { badgeOf, phaseOf, getEvents, withPhase, type CmsEvent } from '../lib/events'
+import UntranslatedNote from '../components/UntranslatedNote.astro'
+import { displayName, isTranslated, langOf, localize, localizePath } from '../lib/i18n'
+import { t } from '../lib/ui'
+
+const { slug } = Astro.params
+const lang = langOf(Astro.url.pathname)
+const L = (href: string) => localizePath(lang, href)
+const raw = await sanity.fetch(Q.event, { slug })
+if (!raw) throw new Error(`Sanity 找不到網址代稱為 "${slug}" 的活動`)
+// 活動是否已結束要用中文的日期文字判斷（withPhase），再合併譯文
+const e = localize(withPhase(raw), lang)
+const translated = isTranslated(localize(raw, 'en'))
+
+const site = 'https://slowlivingeducation.org'
+const cover = imageUrl(e.cover?.image, 1600)
+const coverDims = imageDims(e.cover?.image)
+const hasRecapText = (e.recap?.length ?? 0) > 0
+const video = videoHtml(e.video?.url, e.title, e.video?.caption)
+const hasRecap = hasRecapText || !!video
+const badge = badgeOf({ ...e, hasRecap }, lang)
+// 分享圖：有照片用照片，沒有就用影片縮圖
+const shareImage = cover ?? videoThumb(e.video?.url)
+const ended = phaseOf(e) === 'past'
+const showSignup = !ended && e.signupStatus === 'open' && e.signupUrl
+const tone = typeTone(await getActivityTypes(lang), e.activityType?.slug)
+
+const all = await getEvents(lang)
+
+// 左側列表：分「近期活動」與「活動回顧／已結束」，每組最多 8 筆，目前這頁一定列出
+const SIDE_MAX = 8
+const sideGroup = (title: string, items: CmsEvent[]): SideGroup => {
+  const shown = items.slice(0, SIDE_MAX)
+  const self = items.find((x) => x.slug === e.slug)
+  if (self && !shown.includes(self)) shown.push(self)
+  return {
+    title,
+    items: shown.map((x) => ({ href: L(`/events/${x.slug}`), title: x.title, meta: x.dateLabel, current: x.slug === e.slug })),
+    moreHref: items.length > shown.length ? L('/events#list') : undefined,
+  }
+}
+const side = [sideGroup(t(lang, 'events.upcoming'), all.current), sideGroup(t(lang, 'events.pastGroup'), all.past)].filter((g) => g.items.length > 0)
+
+// 手機版頁尾「其他活動」：同類別的優先，其餘照活動清單順序（還沒結束的在前），最多三個
+const others = all.list.filter((x) => x.slug !== e.slug)
+const sameType = e.activityType ? others.filter((x) => x.activityType?.slug === e.activityType.slug) : []
+const more = [...sameType, ...others.filter((x) => !sameType.includes(x))].slice(0, 3)
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: e.title,
+  description: e.description,
+  image: cover ?? videoThumb(e.video?.url),
+  // 只有具體日期才填開始時間；「每月定期」這類就不填，避免給搜尋引擎錯的日期
+  ...(/^\s*\d{4}\s*[·.\-/]/.test(raw.dateLabel) ? { startDate: e.sortDate } : {}),
+  ...(e.place ? { location: { '@type': 'Place', name: e.place, address: e.place } } : {}),
+  organizer: { '@type': 'Organization', name: t(lang, 'org.name'), url: site + L('/') },
+  eventStatus: 'https://schema.org/EventScheduled',
+  ...(e.signupUrl ? { offers: { '@type': 'Offer', url: e.signupUrl } } : {}),
+}
+---
+<Base title={e.title} description={e.description} ogImage={shareImage} jsonLd={jsonLd} translated={translated}>
+  <div class="page" id="page-event">
+    <UntranslatedNote show={!!e._untranslated} />
+    <div class="container detail-layout">
+      <SideList heading={t(lang, 'events.name')} headingHref={L('/events#list')} label={t(lang, 'events.allEvents')} groups={side} />
+
+      <div>
+        <header class="detail-head">
+          <div class="detail-narrow">
+            <p class="crumbs"><a href={L('/')}>{t(lang, 'crumb.home')}</a> / <a href={L('/events')}>{t(lang, 'events.name')}</a> / {e.title}</p>
+            <p class="detail-badges">
+              {badge && <span class={`signup signup-${badge.kind}`}>{badge.label}</span>}
+              {e.activityType && <a class={`chip tone-${tone}`} href={L(`/events?type=${e.activityType.slug}#list`)}>{e.activityType.title}</a>}
+            </p>
+            <h1>{e.title}</h1>
+            <dl class="detail-facts">
+              <div><dt>{t(lang, 'article.date')}</dt><dd>{e.dateLabel}</dd></div>
+              {e.place && <div><dt>{t(lang, 'event.place')}</dt><dd>{e.place}</dd></div>}
+            </dl>
+            {showSignup && (
+              <a class="btn btn-solid signup-btn ev-signup" href={e.signupUrl} target="_blank" rel="noopener">
+                {t(lang, 'card.signup')} →<span class="sr-only">{t(lang, 'a11y.newWindow')}</span>
+              </a>
+            )}
+          </div>
+        </header>
+
+        <article class="detail-narrow">
+          {video && <Fragment set:html={video} />}
+          {cover && (
+            <figure class="detail-cover">
+              <img src={cover} alt={e.cover?.alt || e.title} width={coverDims?.width} height={coverDims?.height}
+                   loading="eager" decoding="async" />
+              {e.cover?.caption && <figcaption>{e.cover.caption}</figcaption>}
+            </figure>
+          )}
+
+          {e.intro?.length > 0 ? (
+            <div class="detail-text rich-links"><PortableText value={e.intro} /></div>
+          ) : (
+            !hasRecapText && e.description && <p class="detail-text">{e.description}</p>
+          )}
+
+          {hasRecapText && (
+            <section class={`ev-recap${e.intro?.length ? ' after-intro' : ''}`} aria-labelledby="recap-title">
+              <h2 id="recap-title" class="ev-recap-h">{t(lang, 'event.recap')}</h2>
+              {e.recapAuthor && (
+                <p class="ev-by">{t(lang, e.recapAuthor.title ? 'event.byTitle' : 'event.by', { name: displayName(e.recapAuthor, lang), title: e.recapAuthor.title })}</p>
+              )}
+              <div class="detail-text rich-links"><PortableText value={e.recap} /></div>
+            </section>
+          )}
+
+          {e.links?.length > 0 && (
+            <ul class="detail-links">
+              {e.links.map((l: any) => <li><a class="text-link" href={L(l.url)} target="_blank" rel="noopener">{l.title} →</a></li>)}
+            </ul>
+          )}
+
+          {e.pair?.slug && (
+            <a class="ev-pair" href={L(`/events/${e.pair.slug}`)}>
+              <span class="ev-pair-label">{t(lang, e.pair.isRecap ? 'event.pairRecap' : 'event.pairIntro')}</span>
+              <span class="ev-pair-title">{e.pair.title} →</span>
+            </a>
+          )}
+
+          {showSignup && (
+            <p class="ev-signup-again">
+              <a class="btn btn-solid signup-btn" href={e.signupUrl} target="_blank" rel="noopener">{t(lang, 'card.signup')} →<span class="sr-only">{t(lang, 'a11y.newWindow')}</span></a>
+            </p>
+          )}
+        </article>
+      </div>
+    </div>
+
+    {more.length > 0 && (
+      <section class="block block-alt detail-more" aria-labelledby="more-title">
+        <div class="container">
+          <div class="block-head">
+            <h2 id="more-title" class="block-title">{t(lang, 'event.others')}</h2>
+            <a class="text-link" href={L('/events#list')}>{t(lang, 'event.allLink')} →</a>
+          </div>
+          <div class="grid-3">{more.map((x) => <EventCard event={x} />)}</div>
+        </div>
+      </section>
+    )}
+  </div>
+</Base>
+
+<style>
+  .ev-signup { margin-top: 1.6rem; }
+  .ev-recap.after-intro { margin-top: 3rem; padding-top: 2.4rem; border-top: 1px solid var(--line); }
+  .ev-recap-h { font-size: clamp(1.4rem, 2.6vw, 1.8rem); font-weight: 700; color: var(--ink); letter-spacing: 0.1em; margin-bottom: 0.6rem; }
+  .ev-by { font-size: 0.95rem; color: var(--ink-soft); margin-bottom: 1.6rem; }
+  .ev-signup-again { margin-top: 2.4rem; }
+  .ev-pair { display: block; margin-top: 2.6rem; padding: 1.2rem 1.4rem; border-radius: var(--radius); background: var(--forest-pale); text-decoration: none; color: var(--forest-deep); }
+  .ev-pair:hover { background: #d6e3cf; }
+  .ev-pair-label { display: block; font-size: 0.9rem; color: var(--ink-soft); letter-spacing: 0.06em; }
+  .ev-pair-title { display: block; margin-top: 0.2rem; font-weight: 700; font-size: 1.05rem; }
+</style>

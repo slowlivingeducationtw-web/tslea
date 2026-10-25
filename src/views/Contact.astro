@@ -1,0 +1,67 @@
+---
+import Base from '../layouts/Base.astro'
+import { fetchOne, Q } from '../lib/sanity'
+import UntranslatedNote from '../components/UntranslatedNote.astro'
+import { isTranslated, langOf, localize, localizePath } from '../lib/i18n'
+import { t } from '../lib/ui'
+
+type Card = { icon?: string; title: string; body?: string; link?: { title: string; url: string } }
+type Page = {
+  label?: string
+  title: string
+  subtitle?: string
+  cards?: Card[]
+  notes?: string[]
+}
+
+const lang = langOf(Astro.url.pathname)
+const L = (href: string) => localizePath(lang, href)
+const raw = await fetchOne<Page>(Q.contact, {}, '聯絡我們頁面')
+const page = localize(raw, lang)
+---
+<Base
+  title={page.title}
+  description={t(lang, 'contact.description')}
+  translated={isTranslated(localize(raw, 'en'))}
+>
+  <div class="page" id="page-contact">
+    <UntranslatedNote show={!!page._untranslated} />
+    <section class="sec contact-sec">
+      {page.label && <p class="sec-label">{page.label}</p>}
+      <div class="contact-title">{page.title}</div>
+      {page.subtitle && <p class="contact-sub">{page.subtitle}</p>}
+
+      <div class="contact-cards">
+        {(page.cards ?? []).map((c) => (
+          <div class="contact-card">
+            {c.icon && <div class="contact-card-icon">{c.icon}</div>}
+            <div class="contact-card-label">{c.title}</div>
+            <div
+              class="contact-card-value"
+              style={c.body && c.body.length > 16 ? 'font-size:0.9rem;letter-spacing:0;overflow-wrap:anywhere' : 'font-size:1rem;line-height:1.7'}
+            >
+              {c.link?.url ? (
+                <a href={L(c.link.url)} style="color:var(--sage);text-decoration:none">{c.body}</a>
+              ) : (
+                c.body
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {page.notes && page.notes.length > 0 && (
+        <div style="margin-top:3rem;padding:2rem;background:white;border:1px solid var(--border);max-width:500px;margin-left:auto;margin-right:auto">
+          <p style="font-size:0.94rem;letter-spacing:0.15em;color:var(--muted);line-height:2">
+            {page.notes.map((n, i) => (
+              <>
+                ✦ {n}
+                {i < page.notes!.length - 1 && <br />}
+              </>
+            ))}
+          </p>
+        </div>
+      )}
+    </section>
+  </div>
+</Base>

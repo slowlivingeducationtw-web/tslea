@@ -1,0 +1,8 @@
+---
+// 英文版：內容在 src/views/Theme.astro（中英文共用）
+import View from '../../../views/Theme.astro'
+import { themePaths } from '../../../lib/site'
+
+export const getStaticPaths = themePaths
+---
+<View />
