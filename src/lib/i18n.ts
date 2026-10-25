@@ -77,8 +77,14 @@ function merge(base: any, tr: any): any {
 
 const hasContent = (tr: unknown) => isObj(tr) && Object.entries(tr).some(([k, v]) => !TR_META.has(k) && !isEmpty(v))
 
+// Noto Sans TC 的彎引號是全形字，英文裡會空一大格（society’s 看起來像 society ’ s）；
+// 破折號前的空白改成不斷行空白，破折號才不會落到下一行開頭
+const straightQuotes = (s: string) =>
+  s.replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/ (?=[—–])/g, ' ')
+
 export function localize<T>(value: T, lang: Lang): Localized<T> {
   if (Array.isArray(value)) return value.map((v) => localize(v, lang)) as any
+  if (typeof value === 'string' && lang !== DEFAULT_LANG) return straightQuotes(value) as any
   if (!isObj(value)) return value as any
   const { i18n, translations, ...rest } = value as Record<string, any>
   const own: Record<string, any> = {}

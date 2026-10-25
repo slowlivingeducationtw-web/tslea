@@ -96,33 +96,5 @@ export const cardHref = (c: { href?: string; emailSubject?: string }, email: str
 /** 外部連結另開新視窗 */
 export const isExternal = (href: string) => /^https?:\/\//.test(href)
 
-const esc = (s: string) =>
-  s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
-
-/**
- * 後台的純文字轉成大標用的 HTML：Enter 換行變 <br>，並在「、・，」之後才允許斷行，
- * 手機上不會把詞拆成兩半。
- */
-export function headlineHtml(text: string) {
-  return text
-    .trim()
-    .split(/\r?\n/)
-    .map((line) =>
-      line
-        .split(/(?<=[、・，,；])/)
-        .map((seg) => `<span class="nw">${esc(seg)}</span>`)
-        .join(''),
-    )
-    .join('<br>')
-}
-
-/** 換行變 <br>，並把指定字詞包成 <mark>（只標第一個出現的位置） */
-export function highlightHtml(text: string, word?: string) {
-  let html = esc(text.trim())
-  if (word?.trim()) {
-    const w = esc(word.trim())
-    const i = html.indexOf(w)
-    if (i >= 0) html = `${html.slice(0, i)}<mark>${w}</mark>${html.slice(i + w.length)}`
-  }
-  return html.replace(/\r?\n/g, '<br>')
-}
+// 大標／重點句的 HTML 在 headline.ts（不連 Sanity，可以測試）
+export { headlineHtml, highlightHtml } from './headline'

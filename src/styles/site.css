@@ -316,10 +316,13 @@ body { background: var(--paper); color: var(--ink); font-weight: 400; }
 .lang-menu a:focus-visible { outline: 2px solid var(--forest); outline-offset: -2px; }
 .lang-check { width: 1em; display: inline-block; }
 
+/* 字距是為中文調的，套在英文上字母會散開、大標撐出畫面：英文頁一律用正常字距
+   （!important 是因為各處樣式與 style="" 都有寫字距） */
+html[lang='en'] body, html[lang='en'] body * { letter-spacing: normal !important; }
 /* 英文選單字比較長：一般筆電寬度（1101–1280px）選單間距收緊、語言切換只留地球，頁首才放得下 */
 @media (max-width: 1280px) {
   html[lang='en'] .site-header-inner { gap: 1rem; }
-  html[lang='en'] .site-nav a:not(.btn) { padding: 0.55rem 0.5rem; letter-spacing: 0.02em; }
+  html[lang='en'] .site-nav a:not(.btn) { padding: 0.55rem 0.5rem; }
   html[lang='en'] .lang-short, html[lang='en'] .lang-caret { display: none; }
 }
 

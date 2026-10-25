@@ -31,6 +31,11 @@ for (const x of ['https://facebook.com/x', 'mailto:a@b.org', '#donate', '/images
 eq('localizePath zh 去掉 /en', localizePath('zh', '/en/about'), '/about')
 
 // ── 譯文合併 ──
+// 中文字型的彎引號是全形，英文裡會空一大格：譯文換成直引號
+eq('en 彎引號換直引號', localize({ title: '慢', i18n: { en: { title: 'The society’s “slow” way', body: [{ _key: 'a', text: '‘hi’' }] } } }, 'en'),
+  { title: `The society's "slow" way`, body: [{ _key: 'a', text: `'hi'` }], _untranslated: false })
+eq('en 破折號黏前一個字', localize({ t: '慢', i18n: { en: { t: 'certificates — simply' } } }, 'en').t, 'certificates — simply')
+eq('zh 引號不動', localize({ title: '“慢”', i18n: { en: { title: 'x' } } }, 'zh'), { title: '“慢”' })
 eq('zh 移除 i18n', localize({ title: '慢', i18n: { en: { title: 'Slow' } } }, 'zh'), { title: '慢' })
 eq('zh 移除 translations', localize({ title: '慢', translations: { en: { title: 'Slow' } } }, 'zh'), { title: '慢' })
 eq('en 有譯文、空字串退回中文',
@@ -121,6 +126,14 @@ eq('中文頁不用英文姓名', displayName({ name: '王小明', nameEn: 'Hsia
   eq('作者英文姓名', displayName(art.author, 'en'), 'Yu-Ming Chen')
   const recapAuthor = [{ ...authors[0] }, { ...events[1], recapAuthor: { _type: 'reference', _ref: 'a1' } }, events[0]]
   eq('活動回顧作者英文姓名', displayName(localize(await run(Q.event, recapAuthor, { slug: 'recap' }), 'en').recapAuthor, 'en'), 'Yu-Ming Chen')
+}
+
+// ── 大標斷行：中文只在標點後斷；英文照空格斷，不能整行不准斷（手機上會超出畫面）──
+{
+  const { headlineHtml } = await import('../src/lib/headline.ts')
+  eq('中文大標', headlineHtml('慢下來，讓學習\n重新連結'), '<span class="nw">慢下來，</span><span class="nw">讓學習</span><br><span class="nw">重新連結</span>')
+  eq('英文大標', headlineHtml('and let learning and life\nreconnect'), 'and let learning and life<br>reconnect')
+  eq('英文大標跳脫', headlineHtml('Body & Mind'), 'Body &amp; Mind')
 }
 
 console.log(failed ? `${failed} 項不符` : '全部通過')
