@@ -1,5 +1,17 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
+import { readFileSync } from 'node:fs';
+
+// sitemap 在建置完成後才產生，這時可以讀 dist/ 裡的 HTML 看有沒有 noindex
+function isNoindex(page) {
+  const path = new URL(page).pathname.replace(/\/$/, '')
+  const file = path === '' ? 'dist/index.html' : `dist${path}.html`
+  try {
+    return /<meta name="robots" content="noindex/.test(readFileSync(file, 'utf8'))
+  } catch {
+    return false
+  }
+}
 
 export default defineConfig({
   site: 'https://slowlivingeducation.org',
@@ -14,8 +26,8 @@ export default defineConfig({
   prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
   integrations: [
     sitemap({
-      // 理監事專區與 404 不進 sitemap
-      filter: (page) => !/\/(board-area|404)(\.html)?$/.test(page),
+      // 頁面自己標了 noindex 的就不進 sitemap：理監事專區、404、還沒翻譯的英文頁
+      filter: (page) => !isNoindex(page),
       changefreq: 'monthly',
       lastmod: new Date(),
     }),
