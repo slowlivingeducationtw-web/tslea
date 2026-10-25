@@ -48,6 +48,12 @@ const { formats } = Astro.props
   .format-list[style*='--cols:6'] { --gap: 1.4rem; }
   .format-list[style*='--cols:6'] .format-desc { font-size: 0.94rem; }
   /* 項目數決定欄數（最多 6 欄，六類一排並列），畫面窄時改 3 欄（六類＝3＋3）、2 欄、1 欄 */
+  /* 英文說明約是中文的兩倍長：最多 3 欄、說明靠左，六欄擠在一排會變成細長的字條 */
+  @media (min-width: 1001px) {
+    :global(html[lang='en']) .format-item { flex-basis: calc((100% - var(--gap) * 2) / 3); }
+  }
+  :global(html[lang='en']) .format-list { --gap: 2.4rem; }
+  :global(html[lang='en']) .format-desc { text-align: left; font-size: 1rem; max-width: 24em; }
   @media (max-width: 1200px) { .format-item { flex-basis: calc((100% - var(--gap) * 2) / 3); } }
   @media (max-width: 1000px) { .format-item { flex-basis: calc((100% - var(--gap)) / 2); } }
   @media (max-width: 560px) { .format-item { flex-basis: 100%; } }

@@ -35,7 +35,7 @@ const more = t(lang, badge?.kind === 'recap' ? 'card.readRecap' : 'card.seeEvent
       {label && <span class={`chip tone-${tone}`}>{label}</span>}
       {e._untranslated && <span class="chip chip-untranslated">{t(lang, 'untranslated.chip')}</span>}
     </div>
-    <p class="event-date">{e.dateLabel}{e.place ? `・${e.place}` : ''}</p>
+    <p class="event-date">{e.dateLabel}{e.place ? `${t(lang, 'card.dateSep')}${e.place}` : ''}</p>
     <h3 class="card-title"><a class="event-link" href={localizePath(lang, `/events/${e.slug}`)}>{e.title}</a></h3>
     {e.description && <p class="card-text">{e.description}</p>}
     <div class="card-foot event-foot">

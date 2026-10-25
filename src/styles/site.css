@@ -116,6 +116,8 @@ body { background: var(--paper); color: var(--ink); font-weight: 400; }
 .type-btn:hover { border-color: var(--forest); }
 .type-btn.is-on { background: var(--forest); border-color: var(--forest); color: #fff; }
 .type-btn:focus-visible { outline: 2px solid var(--forest); outline-offset: 2px; }
+/* 英文類別名稱比較長：按鈕縮小一點，電腦版才排得進一排 */
+html[lang='en'] .type-btn { font-size: 0.9rem; padding: 0.38rem 0.85rem; }
 @media (max-width: 560px) {
   .type-filter-inner { gap: 0.4rem; padding-block: 0.7rem; }
   .type-filter-label { display: none; }

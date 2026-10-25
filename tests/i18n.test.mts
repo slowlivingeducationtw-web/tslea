@@ -128,6 +128,14 @@ eq('中文頁不用英文姓名', displayName({ name: '王小明', nameEn: 'Hsia
   eq('活動回顧作者英文姓名', displayName(localize(await run(Q.event, recapAuthor, { slug: 'recap' }), 'en').recapAuthor, 'en'), 'Yu-Ming Chen')
 }
 
+// ── 匯款帳號：沒有英文欄位；還沒有數字的是「待公告」之類的說明，英文版換成英文 ──
+{
+  const { accountNoText } = await import('../src/lib/ui.ts')
+  eq('帳號待公告 en', accountNoText('待公告', 'en'), 'To be announced')
+  eq('帳號待公告 zh', accountNoText('待公告', 'zh'), '待公告')
+  eq('真的帳號 en', accountNoText('0123-456-789', 'en'), '0123-456-789')
+}
+
 // ── 大標斷行：中文只在標點後斷；英文照空格斷，不能整行不准斷（手機上會超出畫面）──
 {
   const { headlineHtml } = await import('../src/lib/headline.ts')

@@ -5,7 +5,7 @@ import { fetchOne, Q } from '../lib/sanity'
 import { getSettings, cardHref } from '../lib/site'
 import UntranslatedNote from '../components/UntranslatedNote.astro'
 import { isTranslated, langOf, localize, localizePath } from '../lib/i18n'
-import { t } from '../lib/ui'
+import { t, accountNoText } from '../lib/ui'
 
 // 全部內容在後台「頁面文案 → 與我們合作」。
 // 卡片按鈕：有填「按鈕連結」（例如日後的線上表單）就用它，沒有就寄信給學會並帶入主旨。
@@ -88,7 +88,7 @@ const cards = (page.cards ?? []).filter((c) => c.anchor !== 'donate')
               <dl class="donate-bank">
                 {donate.accountName && <div><dt>{t(lang, 'donate.accountName')}</dt><dd>{donate.accountName}</dd></div>}
                 {donate.bankName && <div><dt>{t(lang, 'donate.bankName')}</dt><dd>{donate.bankName}</dd></div>}
-                {donate.accountNo && <div><dt>{t(lang, 'donate.accountNo')}</dt><dd>{donate.accountNo}</dd></div>}
+                {donate.accountNo && <div><dt>{t(lang, 'donate.accountNo')}</dt><dd>{accountNoText(donate.accountNo, lang)}</dd></div>}
               </dl>
               {donate.receiptNote && (
                 <>
@@ -144,6 +144,8 @@ const cards = (page.cards ?? []).filter((c) => c.anchor !== 'donate')
   .donate-bank { display: grid; gap: 0.5rem; font-size: 1rem; }
   .donate-bank div { display: flex; gap: 1rem; }
   .donate-bank dt { flex: none; width: 3em; color: var(--ink-soft); }
+  /* 英文標籤（Account name）比較長 */
+  :global(html[lang='en']) .donate-bank dt { width: 7.5em; }
   .donate-bank dd { margin: 0; font-weight: 600; color: var(--ink); }
   .donate-sub { margin-top: 1.6rem; font-size: 0.95rem; color: var(--ink-soft); font-weight: 600; letter-spacing: 0.08em; }
   .donate-note { margin-top: 0.3rem; font-size: 0.98rem; line-height: 1.9; color: var(--ink-soft); }

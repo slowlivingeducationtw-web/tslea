@@ -26,6 +26,7 @@ const zh = {
   'card.seeEvent': '看活動內容',
   'card.video': '▶ 影片',
   'card.signup': '我要報名',
+  'card.dateSep': '・',
   'side.more': '看全部',
   'photo.placeholder': '照片待補',
   'pt.zoom': '放大圖片',
@@ -61,6 +62,7 @@ const zh = {
   'donate.accountName': '戶名',
   'donate.bankName': '銀行',
   'donate.accountNo': '帳號',
+  'donate.pending': '待公告',
   'donate.receipt': '捐款收據',
   'partner.ways': '企業、學校與團體合作',
   'contact.description': '聯絡臺灣慢活教育學會：入會諮詢、慢活專欄投稿、合作與贊助提案，歡迎來信與我們聯繫。',
@@ -175,6 +177,7 @@ const en: Record<UiKey, string> = {
   'card.seeEvent': 'See details',
   'card.video': '▶ Video',
   'card.signup': 'Sign up',
+  'card.dateSep': ' · ',
   'side.more': 'See all',
   'photo.placeholder': 'Photo coming soon',
   'pt.zoom': 'Enlarge image',
@@ -210,6 +213,7 @@ const en: Record<UiKey, string> = {
   'donate.accountName': 'Account name',
   'donate.bankName': 'Bank',
   'donate.accountNo': 'Account no.',
+  'donate.pending': 'To be announced',
   'donate.receipt': 'Donation receipts',
   'partner.ways': 'Partnering with Companies, Schools and Groups',
   'contact.description': 'Contact the Slow Living Education Society of Taiwan about membership, writing for the Slow Living Column, partnerships and sponsorship.',
@@ -233,7 +237,7 @@ const en: Record<UiKey, string> = {
   'board.advisors': 'Advisors',
   'board.readSpeech': 'Read the speech ↓',
   'board.speeches': 'Acceptance Speeches',
-  'events.fbNote': 'For the latest news, you can also follow the society on ',
+  'events.fbNote': ' For the latest news, you can also follow the society on ',
   'events.fbLatest': 'For the latest news, follow the society on ',
   'events.period': '.',
   'events.formats': 'Our Activities',
@@ -338,4 +342,9 @@ export function seriesName(series: string | undefined, lang: Lang, short = false
   if (!series) return ''
   if (lang === 'en' && SERIES_EN[series]) return SERIES_EN[series][short ? 'short' : 'full']
   return short ? series.split(/[｜|]/).pop()!.trim() : series
+}
+
+/** 匯款帳號沒有英文欄位：還沒有數字的是「待公告」之類的說明，英文版換成英文；真的帳號照原樣 */
+export function accountNoText(value: string, lang: Lang): string {
+  return lang !== 'zh' && !/\d/.test(value) ? t(lang, 'donate.pending') : value
 }
