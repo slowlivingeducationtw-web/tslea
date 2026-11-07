@@ -1,6 +1,6 @@
 import { defineField, defineType } from 'sanity'
 
-// 學會活動類別（例：身呼吸、慢活日）。是活動與活動回顧的分類標籤，
+// 學會活動類別（例：會員活動、慢活日）。是活動與活動回顧的分類標籤，
 // 也顯示在首頁「我們怎麼一起學」與「活動」頁最上方。
 export const activityType = defineType({
   name: 'activityType',

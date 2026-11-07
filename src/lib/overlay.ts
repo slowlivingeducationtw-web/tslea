@@ -7,6 +7,8 @@ import type { SanityClient } from '@sanity/client'
 import { LANGS } from './i18n'
 
 const ROOT = resolve(process.cwd(), '_private', 'translations')
+// 資料搬移腳本的本機預覽檔（PREVIEW=1 產生）：{ upsert: [文件…], remove: [文件 id…] }
+const PREVIEW = resolve(process.cwd(), '_private', 'preview')
 
 let dataset: Promise<any[]> | undefined
 
@@ -23,7 +25,13 @@ async function load(client: SanityClient) {
       doc.translations = { ...doc.translations, [code]: file.translation }
     }
   }
-  return docs
+  if (!existsSync(PREVIEW)) return docs
+  for (const f of readdirSync(PREVIEW).filter((x) => x.endsWith('.json'))) {
+    const { upsert = [], remove = [] } = JSON.parse(readFileSync(resolve(PREVIEW, f), 'utf8'))
+    for (const d of upsert) byId.set(d._id, d)
+    for (const id of remove) byId.delete(id)
+  }
+  return [...byId.values()]
 }
 
 /** 和 client.fetch 一樣的用法，但查的是「後台資料＋本機譯文」 */

@@ -42,7 +42,7 @@ export type Themes = {
   formatsTitle?: string
 }
 
-/** 學會活動類別（身呼吸、慢活日…）：活動與活動回顧的分類標籤 */
+/** 學會活動類別（會員活動、慢活日…）：活動與活動回顧的分類標籤 */
 export type ActivityType = { _id: string; title: string; slug: string; image?: any; icon?: string; description?: string }
 export type TypeRef = { title: string; slug: string } | null
 
