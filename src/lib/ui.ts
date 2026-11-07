@@ -290,7 +290,7 @@ const en: Record<UiKey, string> = {
   'theme.empty2': ' slow living practice with us.',
   'home.aboutTitle': 'About Us',
   'home.aboutMore': 'More about the society',
-  'home.learning': 'How We Learn Together',
+  'home.learning': 'How we learn together',
   'home.themeMore': 'Explore {title}',
   'home.themeArticles': 'Read articles on {title}',
   'home.allEventsRecaps': 'See all events and recaps',
